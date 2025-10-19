@@ -20,7 +20,7 @@
 
  
 
-- Energy
+- Energy(不直接依赖)
   - 仅维护“累计电能（Wh）”且允许负值表示净能量；不计算“间隔电能”。
   - Metrics 只暴露 `energy_total_wh` 与 `power_watts`。间隔能耗通过 PromQL 在 Prometheus 侧计算。
 
