@@ -165,6 +165,32 @@ func DevelopmentDefaults() *Config {
         EnableStacktrace: true,
     }
 }
+
+// Validate 验证日志配置
+func (c *Config) Validate() error {
+    // 配置验证逻辑
+    return nil
+}
+
+// LogModuleConfig 实现ModuleConfig接口用于配置注册
+type LogModuleConfig struct{}
+
+func (l *LogModuleConfig) Default() interface{} {
+    return DefaultConfig()
+}
+
+func (l *LogModuleConfig) Validate() error {
+    return nil
+}
+
+func (l *LogModuleConfig) GetYAMLKey() string {
+    return "log"
+}
+
+func init() {
+    // 注册日志配置到config系统
+    // config.RegisterModule("log", &LogModuleConfig{})
+}
 ```
 
 ### 4.2 日志接口

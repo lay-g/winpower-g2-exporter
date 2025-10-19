@@ -1,588 +1,536 @@
-# 配置管理模块设计
+# 模块化配置管理设计
 
 ## 1. 概述
 
-配置管理模块负责处理应用程序的所有配置参数，包括命令行参数、环境变量、配置文件等多种配置源的解析、验证和访问。
+配置管理采用分布式模块化设计，每个模块负责管理和维护自己的配置结构。配置加载工具包提供统一的配置加载接口，支持YAML配置文件、环境变量等多种配置源。
 
 ### 1.1 设计目标
 
-- **灵活性**: 支持多种配置来源
-- **优先级**: 明确的配置优先级规则
-- **验证**: 完整的配置参数验证
-- **易用性**: 简单的配置访问接口
-- **扩展性**: 支持新配置参数的添加
+- **模块化**: 每个模块拥有独立的配置结构和管理逻辑
+- **解耦**: 模块间通过配置接口传递，避免直接依赖
+- **一致性**: 统一的配置加载模式和验证机制
+- **向后兼容**: 保持现有YAML配置文件格式不变
+- **易测试**: 每个模块的配置可独立测试
 
-### 1.2 功能范围
+### 1.2 核心原则
 
-- 命令行参数解析
-- 环境变量读取
-- 配置文件加载（可选，支持 YAML）
-- 配置参数验证
-- 默认值设置
-- 配置访问接口
-- **嵌套配置结构**：支持复杂的配置层次结构
-- **Viper 集成**：基于 Viper 的配置管理
+- **配置所有权**: 配置属于使用它的模块，不在中央配置包中定义
+- **接口统一**: 所有配置都实现相同的接口模式
+- **职责分离**: 配置加载工具只负责加载逻辑，不包含业务配置
+- **渐进迁移**: 支持逐步从集中式配置迁移到模块化配置
 
-## 2. 配置参数定义
+## 2. 架构设计
 
-### 2.1 必需参数
-
-| 参数名            | 环境变量                      | 类型   | 说明                   |
-| ----------------- | ----------------------------- | ------ | ---------------------- |
-| winpower.url      | WINPOWER_EXPORTER_CONSOLE_URL | string | WinPower HTTP 服务地址 |
-| winpower.username | WINPOWER_EXPORTER_USERNAME    | string | WinPower 用户名        |
-| winpower.password | WINPOWER_EXPORTER_PASSWORD    | string | WinPower 密码          |
-
-### 2.2 可选参数
-
-| 参数名          | 环境变量                          | 类型     | 默认值      | 说明               |
-| --------------- | --------------------------------- | -------- | ----------- | ------------------ |
-| port            | WINPOWER_EXPORTER_PORT            | int      | 9090        | Exporter 服务端口  |
-| log-level       | WINPOWER_EXPORTER_LOG_LEVEL       | string   | info        | 日志级别           |
-| skip-ssl-verify | WINPOWER_EXPORTER_SKIP_SSL_VERIFY | bool     | false       | 跳过 SSL 证书验证  |
-| data-dir        | WINPOWER_EXPORTER_DATA_DIR        | string   | ./data      | 数据文件目录        |
-
-## 3. 配置优先级
-
-配置参数的优先级从高到低：
-
-1. **命令行参数**: 最高优先级
-2. **环境变量**: 次优先级
-3. **配置文件**: 低优先级（可选）
-4. **默认值**: 最低优先级
+### 2.1 配置架构图
 
 ```
-┌─────────────────┐
-│ Command Line    │  Highest Priority
-├─────────────────┤
-│ Environment Var │
-├─────────────────┤
-│ Config File     │  (Optional)
-├─────────────────┤
-│ Default Value   │  Lowest Priority
-└─────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    Configuration System                    │
+├─────────────────────────────────────────────────────────────┤
+│  ┌────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
+│  │   Storage      │  │      Auth        │  │   Energy     │ │
+│  │   Config       │  │     Config       │  │    Config    │ │
+│  └────────┬───────┘  └────────┬────────┘  └──────┬───────┘ │
+│           │                   │                  │         │
+│  ┌────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
+│  │   Collector    │  │     Server      │  │   (More)     │ │
+│  │   Config       │  │     Config       │  │   Modules    │ │
+│  └────────┬───────┘  └────────┬────────┘  └──────────────┘ │
+│           │                   │                            │
+│           └─────────┬─────────┴────────────────────────────┘ │
+│                     ▼                                      │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │         Configuration Loader (pkgs/config)          │   │
+│  │  - YAML parsing                                     │   │
+│  │  - Environment variable binding                     │   │
+│  │  - Validation utilities                            │   │
+│  └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Configuration Sources                   │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐   │
+│  │ YAML File   │  │ Environment │  │ Default Values      │   │
+│  │ config.yaml │  │ Variables   │  │ (per module)        │   │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## 4. 数据结构设计
+### 2.2 配置包结构
 
-### 4.1 配置结构体
+```
+internal/
+├── pkgs/
+│   └── config/                 # 配置加载工具包
+│       ├── loader.go          # 配置加载器
+│       ├── interface.go       # 配置接口定义
+│       └── utils.go           # 配置工具函数
+├── storage/
+│   ├── config.go              # Storage模块配置
+│   └── config_test.go         # Storage配置测试
+├── auth/
+│   ├── config.go              # Auth模块配置
+│   └── config_test.go         # Auth配置测试
+├── energy/
+│   ├── config.go              # Energy模块配置
+│   └── config_test.go         # Energy配置测试
+├── collector/
+│   ├── config.go              # Collector模块配置
+│   └── config_test.go         # Collector配置测试
+└── server/
+    ├── config.go              # Server模块配置
+    └── config_test.go         # Server配置测试
+```
+
+## 3. 配置接口设计
+
+### 3.1 统一配置接口
 
 ```go
-package config
+// Config 统一配置接口
+type Config interface {
+    // Validate 验证配置的有效性
+    Validate() error
+
+    // SetDefaults 设置默认值
+    SetDefaults()
+
+    // String 返回配置的字符串表示（敏感信息脱敏）
+    String() string
+}
+
+// Provider 配置提供者接口
+type Provider interface {
+    // Load 从配置源加载配置
+    Load() (Config, error)
+
+    // LoadFromEnv 仅从环境变量加载配置
+    LoadFromEnv() Config
+
+    // GetConfigPath 获取配置文件路径
+    GetConfigPath() string
+}
+```
+
+### 3.2 配置加载器
+
+```go
+// Loader 配置加载器
+type Loader struct {
+    prefix    string           // 环境变量前缀
+    v         *viper.Viper    // Viper实例
+    configMap map[string]interface{} // 配置映射
+}
+
+// NewLoader 创建新的配置加载器
+func NewLoader(prefix string) *Loader
+
+// LoadModule 加载指定模块的配置
+func (l *Loader) LoadModule(moduleName string, configStruct interface{}) error
+
+// BindEnv 绑定环境变量
+func (l *Loader) BindEnv(key string, envKeys ...string) error
+
+// Validate 验证配置
+func (l *Loader) Validate(config Config) error
+```
+
+## 4. 模块配置示例
+
+### 4.1 Storage模块配置
+
+```go
+// internal/storage/config.go
+package storage
+
+import (
+    "os"
+    "github.com/lay-g/winpower-g2-exporter/internal/pkgs/config"
+)
+
+// Config Storage模块配置
+type Config struct {
+    DataDir         string      `yaml:"data_dir" env:"STORAGE_DATA_DIR" validate:"required"`
+    CreateDir       bool        `yaml:"create_dir" env:"STORAGE_CREATE_DIR"`
+    SyncWrite       bool        `yaml:"sync_write" env:"STORAGE_SYNC_WRITE"`
+    FilePermissions os.FileMode `yaml:"file_permissions" env:"STORAGE_FILE_PERMISSIONS"`
+    DirPermissions  os.FileMode `yaml:"dir_permissions" env:"STORAGE_DIR_PERMISSIONS"`
+}
+
+// NewConfig 创建新的Storage配置
+func NewConfig(loader *config.Loader) (*Config, error) {
+    cfg := &Config{}
+    cfg.SetDefaults()
+
+    if err := loader.LoadModule("storage", cfg); err != nil {
+        return nil, err
+    }
+
+    return cfg, cfg.Validate()
+}
+
+// Validate 验证配置
+func (c *Config) Validate() error {
+    if c.DataDir == "" {
+        return errors.New("storage: data_dir is required")
+    }
+    // 更多验证逻辑...
+    return nil
+}
+
+// SetDefaults 设置默认值
+func (c *Config) SetDefaults() {
+    if c.DataDir == "" {
+        c.DataDir = "./data"
+    }
+    if c.FilePermissions == 0 {
+        c.FilePermissions = 0644
+    }
+    if c.DirPermissions == 0 {
+        c.DirPermissions = 0755
+    }
+    if !c.CreateDir {
+        c.CreateDir = true
+    }
+    if !c.SyncWrite {
+        c.SyncWrite = true
+    }
+}
+
+// String 返回配置的字符串表示
+func (c *Config) String() string {
+    return fmt.Sprintf("StorageConfig{DataDir: %s, CreateDir: %t, SyncWrite: %t}",
+        c.DataDir, c.CreateDir, c.SyncWrite)
+}
+```
+
+### 4.2 Auth模块配置
+
+```go
+// internal/auth/config.go
+package auth
 
 import (
     "time"
-    "os"
+    "github.com/lay-g/winpower-g2-exporter/internal/pkgs/config"
 )
 
-// Config 应用程序配置
+// Config Auth模块配置
 type Config struct {
-    Server   ServerConfig   `yaml:"server,omitempty"`
-    Log      LogConfig      `yaml:"log,omitempty"`
-    WinPower WinPowerConfig `yaml:"winpower"`
-    Storage  StorageConfig  `yaml:"storage,omitempty"`
-
-    // 配置文件路径（仅用于加载，不保存到配置文件）
-    ConfigFile string `yaml:"-"`
+    URL             string        `yaml:"url" env:"AUTH_URL" validate:"required,url"`
+    Username        string        `yaml:"username" env:"AUTH_USERNAME" validate:"required"`
+    Password        string        `yaml:"password" env:"AUTH_PASSWORD" validate:"required"`
+    Timeout         time.Duration `yaml:"timeout" env:"AUTH_TIMEOUT"`
+    RefreshThreshold time.Duration `yaml:"refresh_threshold" env:"AUTH_REFRESH_THRESHOLD"`
+    SkipSSLVerify   bool          `yaml:"skip_ssl_verify" env:"AUTH_SKIP_SSL_VERIFY"`
+    MaxRetries      int           `yaml:"max_retries" env:"AUTH_MAX_RETRIES"`
 }
 
-// WinPowerConfig WinPower 系统配置
-type WinPowerConfig struct {
-    // 服务地址 (必需)
-    URL string `mapstructure:"url" validate:"required,url"`
+// NewConfig 创建新的Auth配置
+func NewConfig(loader *config.Loader) (*Config, error) {
+    cfg := &Config{}
+    cfg.SetDefaults()
 
-    // 用户名 (必需)
-    Username string `mapstructure:"username" validate:"required"`
-
-    // 密码 (必需)
-    Password string `mapstructure:"password" validate:"required"`
-
-    // 跳过 SSL 证书验证
-    SkipSSLVerify bool `mapstructure:"skip_ssl_verify"`
-
-    // 请求超时时间 (供 Collector 和 Auth 模块使用)
-    Timeout time.Duration `mapstructure:"timeout"`
-}
-
-// ServerConfig Exporter 服务配置
-type ServerConfig struct {
-    // 监听端口
-    Port int `yaml:"port" validate:"min=1,max=65535"`
-
-    // 绑定地址
-    Host string `yaml:"host"`
-
-    // 读取超时
-    ReadTimeout time.Duration `yaml:"read_timeout"`
-
-    // 写入超时
-    WriteTimeout time.Duration `yaml:"write_timeout"`
-
-    // 启用 pprof
-    EnablePprof bool `yaml:"enable_pprof"`
-}
-
-// LogConfig 日志配置
-type LogConfig struct {
-    // 日志级别: debug, info, warn, error
-    Level string `yaml:"level" validate:"oneof=debug info warn error"`
-
-    // 日志格式: json, console
-    Format string `yaml:"format" validate:"oneof=json console"`
-
-    // 日志输出: stdout, stderr, file, both
-    Output string `yaml:"output"`
-
-    // 日志文件路径
-    FilePath string `yaml:"file_path"`
-
-    // 日志轮转配置
-    MaxSize          int  `yaml:"max_size"`           // MB
-    MaxAge           int  `yaml:"max_age"`             // days
-    MaxBackups       int  `yaml:"max_backups"`     // number of backups
-    Compress         bool `yaml:"compress"`           // compress rotated files
-
-    // 高级选项
-    EnableCaller     bool `yaml:"enable_caller"`
-    EnableStacktrace bool `yaml:"enable_stacktrace"`
-}
-
-// StorageConfig 存储配置
-type StorageConfig struct {
-    // 数据文件目录路径
-    DataDir string `yaml:"data_dir" validate:"required"`
-
-    // 文件权限
-    FilePermissions os.FileMode `yaml:"file_permissions"`
-
-    // 目录权限
-    DirPermissions os.FileMode `yaml:"dir_permissions"`
-
-    // 是否同步写入
-    SyncWrite bool `yaml:"sync_write"`
-
-    // 自动创建目录
-    CreateDir bool `yaml:"create_dir"`
-}
-```
-
-### 4.2 配置管理器接口
-
-```go
-// Manager 配置管理器接口（基于 Viper）
-type Manager interface {
-    // Load 加载配置
-    Load() error
-
-    // Get 获取配置
-    Get() *Config
-
-    // Validate 验证配置
-    Validate() error
-}
-
-// LoadOption 配置加载选项
-type LoadOption func(*manager)
-
-// WithConfigFile 设置配置文件路径
-func WithConfigFile(path string) LoadOption
-
-// WithEnvPrefix 设置环境变量前缀
-func WithEnvPrefix(prefix string) LoadOption
-
-// 创建管理器的便捷函数
-func NewManager(opts ...LoadOption) Manager
-func LoadWithOptions(opts ...LoadOption) (Manager, error)
-func LoadFromFileWithManager(path string) (Manager, error)
-```
-
-### 4.3 简单加载函数
-
-```go
-// 便捷加载函数
-func Load() (*Config, error)
-func LoadFromFile(path string) (*Config, error)
-func LoadFromEnv() *Config
-```
-
-### 4.4 存储配置详细说明
-
-#### 4.4.1 配置项说明
-
-| 配置项 | 类型 | 默认值 | 说明 |
-|--------|------|--------|------|
-| data_dir | string | "./data" | 数据文件目录路径，支持绝对路径和相对路径 |
-| file_permissions | os.FileMode | 0644 | 文件权限设置，默认为读写权限 |
-| sync_write | bool | true | 是否同步写入，确保数据持久化 |
-
-#### 4.4.2 配置建议
-
-##### 生产环境配置
-
-```yaml
-storage:
-  data_dir: "/var/lib/winpower-exporter/data"
-  file_permissions: "0644"
-  sync_write: true
-```
-
-##### 开发环境配置
-
-```yaml
-storage:
-  data_dir: "./data"
-  file_permissions: "0644"
-  sync_write: false  # 开发环境可以关闭同步写入以提高性能
-```
-
-##### Docker 容器配置
-
-```yaml
-storage:
-  data_dir: "/app/data"  # 使用容器内的数据目录
-  file_permissions: "0644"
-  sync_write: true
-```
-
-#### 4.4.3 文件命名规则
-
-在配置的数据目录中，每个设备将使用独立的文件存储：
-
-- **文件命名**: `{device_id}.txt` - 使用设备ID作为文件名
-- **文件示例**:
-  - `a1.txt` - 设备ID为a1的数据文件
-  - `b2.txt` - 设备ID为b2的数据文件
-  - `ups_main.txt` - 设备ID为ups_main的数据文件
-
-#### 4.4.4 配置验证
-
-```go
-// Validate 验证存储配置
-func (sc *StorageConfig) Validate() error {
-    // 检查数据目录路径
-    if sc.DataDir == "" {
-        return errors.New("data_dir cannot be empty")
+    if err := loader.LoadModule("auth", cfg); err != nil {
+        return nil, err
     }
 
-    // 检查目录是否可创建
-    if err := os.MkdirAll(sc.DataDir, 0755); err != nil {
-        return fmt.Errorf("failed to create data directory: %w", err)
-    }
+    return cfg, cfg.Validate()
+}
 
-    // 检查目录是否可写
-    testFile := filepath.Join(sc.DataDir, ".write_test")
-    if err := os.WriteFile(testFile, []byte("test"), sc.FilePermissions); err != nil {
-        return fmt.Errorf("data directory is not writable: %w", err)
+// Validate 验证配置
+func (c *Config) Validate() error {
+    if c.URL == "" {
+        return errors.New("auth: url is required")
     }
-    os.Remove(testFile)
-
+    if c.Username == "" {
+        return errors.New("auth: username is required")
+    }
+    if c.Password == "" {
+        return errors.New("auth: password is required")
+    }
+    if c.Timeout <= 0 {
+        return errors.New("auth: timeout must be positive")
+    }
     return nil
 }
-```
 
-## 5. 实现设计
-
-### 5.1 初始化流程
-
-```
-┌────────────────────────────────────────────────┐
-│              Initialize Config                 │
-└─────────────────┬──────────────────────────────┘
-                  │
-                  ▼
-┌────────────────────────────────────────────────┐
-│      1. Create Viper Instance                  │
-└─────────────────┬──────────────────────────────┘
-                  │
-                  ▼
-┌────────────────────────────────────────────────┐
-│      2. Set Default Values                     │
-└─────────────────┬──────────────────────────────┘
-                  │
-                  ▼
-┌────────────────────────────────────────────────┐
-│      3. Bind Environment Variables             │
-└─────────────────┬──────────────────────────────┘
-                  │
-                  ▼
-┌────────────────────────────────────────────────┐
-│      4. Parse Command Line Flags               │
-└─────────────────┬──────────────────────────────┘
-                  │
-                  ▼
-┌────────────────────────────────────────────────┐
-│      5. Load Config File (if exists)           │
-└─────────────────┬──────────────────────────────┘
-                  │
-                  ▼
-┌────────────────────────────────────────────────┐
-│      6. Unmarshal to Config Struct             │
-└─────────────────┬──────────────────────────────┘
-                  │
-                  ▼
-┌────────────────────────────────────────────────┐
-│      7. Validate Configuration                 │
-└─────────────────┬──────────────────────────────┘
-                  │
-                  ▼
-┌────────────────────────────────────────────────┐
-│      8. Return Config Instance                 │
-└────────────────────────────────────────────────┘
-```
-
-### 5.2 核心函数
-
-#### 5.2.1 创建配置管理器
-
-```go
-// NewManager 创建配置管理器
-func NewManager() Manager {
-    // 创建空的配置结构体实例
-    // 创建新的 Viper 实例用于配置管理
-    // 初始化管理器结构体并返回
-}
-```
-
-#### 5.2.2 加载配置
-
-```go
-// Load 加载配置
-func (m *manager) Load() error {
-    // 调用 setDefaults 方法设置所有配置项的默认值
-    // 调用 bindEnvVars 方法绑定环境变量到配置项
-    // 调用 loadConfigFile 方法加载配置文件（如果存在）
-    // 使用 Viper 将配置解析到 Config 结构体
-    // 调用 Validate 方法验证配置的有效性
-    // 返回加载结果或错误信息
-}
-```
-
-#### 5.2.3 设置默认值
-
-```go
-// setDefaults 设置默认值
-func (m *manager) setDefaults() {
-    // 设置服务器相关默认值：端口、主机、读写超时等
-    // 设置日志相关默认值：级别、格式、输出方式等
-    // 设置 WinPower 相关默认值：SSL验证、超时时间等
-    // 设置存储相关默认值：数据目录、文件权限、同步写入等
-}
-```
-
-#### 5.2.4 绑定环境变量
-
-```go
-// bindEnvVars 绑定环境变量
-func (m *manager) bindEnvVars() error {
-    // 设置环境变量统一前缀为 WINPOWER_EXPORTER
-    // 启用自动环境变量绑定功能
-    // 设置环境变量键名替换规则（将点替换为下划线）
-    // 定义关键配置项与环境变量的映射关系
-    // 遍历映射表，显式绑定每个环境变量
-    // 处理绑定过程中的错误并返回结果
-}
-```
-
-#### 5.2.5 配置验证
-
-```go
-// Validate 验证配置
-func (m *manager) Validate() error {
-    // 创建 validator 实例用于结构体标签验证
-    // 执行结构体验证，检查所有标签约束
-    // 返回验证结果或错误信息
-}
-```
-
-### 5.3 命令行集成
-
-#### 5.3.1 Cobra 命令定义
-
-```go
-package cmd
-
-import (
-    "github.com/spf13/cobra"
-    "github.com/spf13/viper"
-)
-
-var (
-    cfgFile string
-    rootCmd = &cobra.Command{
-        Use:   "winpower-g2-exporter",
-        Short: "WinPower G2 Prometheus Exporter",
-        Long:  "Export WinPower device metrics to Prometheus",
-        RunE:  run,
+// SetDefaults 设置默认值
+func (c *Config) SetDefaults() {
+    if c.Timeout == 0 {
+        c.Timeout = 30 * time.Second
     }
-)
+    if c.RefreshThreshold == 0 {
+        c.RefreshThreshold = 5 * time.Minute
+    }
+    if c.MaxRetries == 0 {
+        c.MaxRetries = 3
+    }
+}
 
-func init() {
-    cobra.OnInitialize(initConfig)
-    
-    // 全局配置
-    rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file")
-    
-    // WinPower 配置
-    rootCmd.Flags().String("winpower.url", "", "WinPower HTTP service URL (required)")
-    rootCmd.Flags().String("winpower.username", "", "WinPower username (required)")
-    rootCmd.Flags().String("winpower.password", "", "WinPower password (required)")
-    rootCmd.Flags().Bool("skip-ssl-verify", false, "Skip SSL certificate verification")
-    
-    // Server 配置
-    rootCmd.Flags().Int("port", 9090, "Exporter service port")
-    
-    // Log 配置
-    rootCmd.Flags().String("log-level", "info", "Log level (debug, info, warn, error)")
-    
-        
-    // Storage 配置
-    rootCmd.Flags().String("data-dir", "./data", "Data files directory path")
-    rootCmd.Flags().Bool("sync-write", true, "Enable synchronous write for data persistence")
-    
-    // 标记必需参数
-    rootCmd.MarkFlagRequired("winpower.url")
-    rootCmd.MarkFlagRequired("winpower.username")
-    rootCmd.MarkFlagRequired("winpower.password")
-    
-    // 绑定到 Viper
-    viper.BindPFlags(rootCmd.Flags())
+// String 返回配置的字符串表示（敏感信息脱敏）
+func (c *Config) String() string {
+    return fmt.Sprintf("AuthConfig{URL: %s, Username: %s, Password: ***}",
+        c.URL, c.Username)
 }
 ```
 
-## 6. 配置文件支持
+## 5. 配置文件格式
 
-### 6.1 配置文件格式
+### 5.1 YAML配置文件
 
-支持 YAML 配置文件格式。
-
-#### YAML 示例
+配置文件保持现有格式，确保向后兼容：
 
 ```yaml
 # config.yaml
-winpower:
+storage:
+  data_dir: "./data"
+  create_dir: true
+  sync_write: true
+  file_permissions: 0644
+  dir_permissions: 0755
+
+auth:
   url: "https://192.168.1.100:8081"
   username: "admin"
   password: "password"
-  skip_ssl_verify: true
   timeout: 30s
+  refresh_threshold: 5m
+  skip_ssl_verify: true
+  max_retries: 3
+
+collector:
+  interval: 5s
+  timeout: 10s
+  max_retries: 2
+  batch_size: 10
+
+energy:
+  calculation_interval: 5s
+  precision: 6
+  unit: "wh"
+  aggregation_window: 1m
 
 server:
-  port: 9090
   host: "0.0.0.0"
+  port: 9090
   read_timeout: 30s
   write_timeout: 30s
-
-log:
-  level: "info"
-  format: "json"
-  output: "stdout"
-
-storage:
-  data_dir: "./data"
-  file_permissions: "0644"
-  sync_write: true
+  enable_pprof: false
+  cors_enabled: false
 ```
 
-### 6.2 配置文件加载
+### 5.2 环境变量映射
 
-```go
-// loadConfigFile 加载配置文件
-func (m *manager) loadConfigFile() error {
-    // 检查是否指定了配置文件路径，有则使用指定路径
-    // 未指定时在默认位置搜索配置文件
-    // 设置配置文件名和类型（默认为config.yaml）
-    // 添加搜索路径：./config、$HOME/.config/winpower-exporter/、/etc/winpower-exporter/
-    // 尝试读取配置文件，文件不存在时不报错
-    // 处理其他读取错误并返回结果
-}
+环境变量命名保持现有规则：
+
+```bash
+# Storage配置
+export WINPOWER_EXPORTER_STORAGE_DATA_DIR="/var/lib/winpower-exporter"
+export WINPOWER_EXPORTER_STORAGE_SYNC_WRITE="true"
+
+# Auth配置
+export WINPOWER_EXPORTER_AUTH_URL="https://winpower.example.com"
+export WINPOWER_EXPORTER_AUTH_USERNAME="admin"
+export WINPOWER_EXPORTER_AUTH_PASSWORD="secret"
+
+# Server配置
+export WINPOWER_EXPORTER_SERVER_PORT="9090"
+export WINPOWER_EXPORTER_SERVER_HOST="0.0.0.0"
 ```
 
+## 6. 配置加载流程
 
-## 7. 错误处理
+### 6.1 初始化流程
 
-### 7.1 错误类型
-
-```go
-var (
-    // ErrConfigNotFound 配置文件未找到
-    ErrConfigNotFound = errors.New("config file not found")
-    
-    // ErrInvalidConfig 无效的配置
-    ErrInvalidConfig = errors.New("invalid configuration")
-    
-    // ErrMissingRequired 缺少必需参数
-    ErrMissingRequired = errors.New("missing required parameter")
-    
-    // ErrValidationFailed 验证失败
-    ErrValidationFailed = errors.New("configuration validation failed")
-)
+```
+┌────────────────────────────────────────────────┐
+│              Application Startup               │
+└─────────────────┬──────────────────────────────┘
+                  │
+                  ▼
+┌────────────────────────────────────────────────┐
+│      1. Create Configuration Loader           │
+│      - Set environment variable prefix         │
+│      - Initialize Viper instance               │
+└─────────────────┬──────────────────────────────┘
+                  │
+                  ▼
+┌────────────────────────────────────────────────┐
+│      2. Load Configuration File               │
+│      - Parse YAML file                         │
+│      - Handle file not found gracefully       │
+└─────────────────┬──────────────────────────────┘
+                  │
+                  ▼
+┌────────────────────────────────────────────────┐
+│      3. Bind Environment Variables            │
+│      - Apply module-specific prefixes          │
+│      - Override file settings                  │
+└─────────────────┬──────────────────────────────┘
+                  │
+                  ▼
+┌────────────────────────────────────────────────┐
+│      4. Load Module Configurations            │
+│      - storage → auth → energy → collector     │
+│      - Each module validates its config        │
+└─────────────────┬──────────────────────────────┘
+                  │
+                  ▼
+┌────────────────────────────────────────────────┐
+│      5. Initialize Services                   │
+│      - Pass configs to service constructors    │
+│      - Start the application                   │
+└────────────────────────────────────────────────┘
 ```
 
-### 7.2 错误处理策略
+### 6.2 依赖加载顺序
 
 ```go
-// Load 加载配置并处理错误
-func (m *manager) Load() error {
-    if err := m.load(); err != nil {
-        // 记录详细错误日志
-        log.Error("Failed to load configuration",
-            zap.Error(err),
-            zap.String("config_file", cfgFile),
-        )
-        
-        // 根据错误类型返回不同的错误信息
-        switch {
-        case errors.Is(err, ErrMissingRequired):
-            return fmt.Errorf("missing required parameters, please check --help")
-        case errors.Is(err, ErrValidationFailed):
-            return fmt.Errorf("configuration validation failed: %w", err)
-        default:
-            return fmt.Errorf("failed to load configuration: %w", err)
-        }
+func main() {
+    // 1. 创建配置加载器
+    loader := config.NewLoader("WINPOWER_EXPORTER")
+
+    // 2. 按依赖顺序加载模块配置
+    storageConfig, err := storage.NewConfig(loader)
+    if err != nil {
+        log.Fatalf("Failed to load storage config: %v", err)
     }
-    
-    return nil
+
+    authConfig, err := auth.NewConfig(loader)
+    if err != nil {
+        log.Fatalf("Failed to load auth config: %v", err)
+    }
+
+    energyConfig, err := energy.NewConfig(loader)
+    if err != nil {
+        log.Fatalf("Failed to load energy config: %v", err)
+    }
+
+    collectorConfig, err := collector.NewConfig(loader)
+    if err != nil {
+        log.Fatalf("Failed to load collector config: %v", err)
+    }
+
+    serverConfig, err := server.NewConfig(loader)
+    if err != nil {
+        log.Fatalf("Failed to load server config: %v", err)
+    }
+
+    // 3. 初始化服务（按依赖顺序）
+    logger := log.New(logConfig)
+
+    storageManager, err := storage.NewManager(storageConfig, logger)
+    if err != nil {
+        log.Fatalf("Failed to create storage manager: %v", err)
+    }
+
+    authService, err := auth.NewService(authConfig, logger)
+    if err != nil {
+        log.Fatalf("Failed to create auth service: %v", err)
+    }
+
+    // ... 继续初始化其他服务
+
+    // 4. 启动应用
+    app := &App{
+        Storage:  storageManager,
+        Auth:     authService,
+        // ...
+    }
+
+    if err := app.Run(); err != nil {
+        log.Fatalf("Failed to start application: %v", err)
+    }
 }
 ```
 
-## 8. 测试设计
+## 7. 配置验证和错误处理
+
+### 7.1 验证策略
+
+- **必需字段验证**: 检查所有必需参数是否提供
+- **类型验证**: 确保配置值类型正确
+- **范围验证**: 验证数值在合理范围内
+- **格式验证**: 检查URL、文件路径等格式
+- **依赖验证**: 验证相关配置项的一致性
+
+### 7.2 错误处理
+
+```go
+// 配置加载错误的统一处理
+type ConfigError struct {
+    Module  string
+    Field   string
+    Value   interface{}
+    Message string
+    Cause   error
+}
+
+func (e *ConfigError) Error() string {
+    return fmt.Sprintf("config error in %s.%s: %s (value: %v)",
+        e.Module, e.Field, e.Message, e.Value)
+}
+
+// 使用示例
+if err := config.Validate(); err != nil {
+    var configErr *ConfigError
+    if errors.As(err, &configErr) {
+        log.Fatalf("Configuration validation failed: %s", configErr.Error())
+    }
+    log.Fatalf("Unexpected configuration error: %v", err)
+}
+```
+
+## 8. 测试策略
 
 ### 8.1 单元测试
 
+每个模块的配置都需要完整的单元测试：
+
 ```go
-func TestConfigLoad(t *testing.T) {
+func TestConfig(t *testing.T) {
     tests := []struct {
         name    string
-        setup   func()
+        setup   func() *Config
         wantErr bool
+        errMsg  string
     }{
         {
-            name: "valid config with defaults",
-            setup: func() {
-                os.Setenv("WINPOWER_EXPORTER_CONSOLE_URL", "http://localhost:8081")
-                os.Setenv("WINPOWER_EXPORTER_USERNAME", "admin")
-                os.Setenv("WINPOWER_EXPORTER_PASSWORD", "password")
+            name: "valid config",
+            setup: func() *Config {
+                cfg := &Config{DataDir: "/tmp", CreateDir: true}
+                cfg.SetDefaults()
+                return cfg
             },
             wantErr: false,
         },
         {
-            name: "missing required url",
-            setup: func() {
-                os.Unsetenv("WINPOWER_EXPORTER_CONSOLE_URL")
+            name: "missing required field",
+            setup: func() *Config {
+                cfg := &Config{}
+                cfg.SetDefaults()
+                cfg.DataDir = "" // 清空必需字段
+                return cfg
             },
             wantErr: true,
+            errMsg:  "data_dir is required",
         },
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
-            tt.setup()
-            
-            m := NewManager()
-            err := m.Load()
-            
+            cfg := tt.setup()
+            err := cfg.Validate()
+
             if (err != nil) != tt.wantErr {
-                t.Errorf("Load() error = %v, wantErr %v", err, tt.wantErr)
+                t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+                return
+            }
+
+            if tt.wantErr && !strings.Contains(err.Error(), tt.errMsg) {
+                t.Errorf("Validate() error = %v, expected to contain %s", err, tt.errMsg)
             }
         })
     }
@@ -591,154 +539,90 @@ func TestConfigLoad(t *testing.T) {
 
 ### 8.2 集成测试
 
+测试配置加载的完整流程：
+
 ```go
-func TestConfigIntegration(t *testing.T) {
+func TestConfigLoading(t *testing.T) {
     // 创建临时配置文件
-    tmpfile, err := ioutil.TempFile("", "config.*.yaml")
+    tmpFile, err := ioutil.TempFile("", "test-config.*.yaml")
     if err != nil {
         t.Fatal(err)
     }
-    defer os.Remove(tmpfile.Name())
-    
-    // 写入配置
-    config := `
-winpower:
-  url: "http://localhost:8081"
-  username: "admin"
-  password: "password"
-server:
-  port: 9090
+    defer os.Remove(tmpFile.Name())
+
+    // 写入测试配置
+    configContent := `
+storage:
+  data_dir: "/tmp/test"
+  sync_write: true
+auth:
+  url: "http://localhost:8080"
+  username: "test"
+  password: "test"
 `
-    if _, err := tmpfile.Write([]byte(config)); err != nil {
+
+    if _, err := tmpFile.Write([]byte(configContent)); err != nil {
         t.Fatal(err)
     }
-    tmpfile.Close()
-    
-    // 加载配置
-    cfgFile = tmpfile.Name()
-    m := NewManager()
-    if err := m.Load(); err != nil {
-        t.Fatalf("Load() error = %v", err)
-    }
-    
-    // 验证配置
-    cfg := m.Get()
-    if cfg.WinPower.URL != "http://localhost:8081" {
-        t.Errorf("WinPower.URL = %v, want %v", cfg.WinPower.URL, "http://localhost:8081")
-    }
-}
-```
+    tmpFile.Close()
 
-## 9. 使用示例
+    // 测试配置加载
+    loader := config.NewLoader("TEST")
+    loader.SetConfigFile(tmpFile.Name())
 
-### 9.1 基本使用
-
-```go
-package main
-
-import (
-    "log"
-    "github.com/your-org/winpower-g2-exporter/internal/config"
-)
-
-func main() {
-    // 创建配置管理器
-    cfg := config.NewManager()
-    
-    // 加载配置
-    if err := cfg.Load(); err != nil {
-        log.Fatalf("Failed to load config: %v", err)
-    }
-    
-    // 获取配置
-    appConfig := cfg.Get()
-    
-    // 使用配置
-    log.Printf("WinPower URL: %s", appConfig.WinPower.URL)
-    log.Printf("Server Port: %d", appConfig.Server.Port)
-    log.Printf("Log Level: %s", appConfig.Log.Level)
-}
-```
-
-
-## 10. 最佳实践
-
-### 10.1 环境变量命名
-
-- 使用统一前缀: `WINPOWER_EXPORTER_`
-- 使用大写字母
-- 使用下划线分隔单词
-- 避免与系统环境变量冲突
-
-### 10.2 配置验证
-
-- 在启动时验证所有配置
-- 提供清晰的错误信息
-- 记录配置验证日志
-- 验证失败立即退出
-
-### 10.3 敏感信息处理
-
-- 密码不记录到日志
-- 支持从环境变量读取敏感信息
-- 配置文件设置适当的权限
-
-### 10.4 配置文档
-
-- 为每个配置项提供注释
-- 提供YAML配置示例文件
-- 文档化配置的默认值
-- 说明配置项的影响
-
-## 11. 性能考虑
-
-### 11.1 配置缓存
-
-```go
-// 配置加载后缓存，避免重复解析
-type manager struct {
-    config *Config
-    v      *viper.Viper
-    mu     sync.RWMutex
-}
-
-// Get 获取配置（线程安全）
-func (m *manager) Get() *Config {
-    m.mu.RLock()
-    defer m.mu.RUnlock()
-    return m.config
-}
-```
-
-
-## 12. 安全考虑
-
-### 12.1 敏感信息保护
-
-```go
-// String 实现，避免密码泄露
-func (c *WinPowerConfig) String() string {
-    return fmt.Sprintf("WinPowerConfig{URL: %s, Username: %s, Password: ***}",
-        c.URL, c.Username)
-}
-```
-
-### 12.2 配置文件权限
-
-```go
-// 检查配置文件权限
-func checkConfigFilePermissions(path string) error {
-    info, err := os.Stat(path)
+    storageConfig, err := storage.NewConfig(loader)
     if err != nil {
-        return err
+        t.Fatalf("Failed to load storage config: %v", err)
     }
-    
-    // 配置文件不应该对其他用户可读
-    if info.Mode().Perm()&0044 != 0 {
-        return errors.New("config file has insecure permissions")
+
+    if storageConfig.DataDir != "/tmp/test" {
+        t.Errorf("Expected DataDir to be '/tmp/test', got '%s'", storageConfig.DataDir)
     }
-    
-    return nil
+
+    if !storageConfig.SyncWrite {
+        t.Errorf("Expected SyncWrite to be true, got false")
+    }
 }
 ```
 
+## 9. 最佳实践
+
+### 9.1 配置设计原则
+
+- **最小权限**: 每个模块只能访问自己的配置
+- **敏感信息保护**: 密码等敏感信息在日志中脱敏
+- **默认值安全**: 默认值应该是最安全和最常用的选项
+- **验证严格**: 在启动时验证所有配置，运行时不做假设
+
+### 9.2 性能考虑
+
+- **延迟加载**: 只在需要时加载配置
+- **配置缓存**: 加载后的配置在内存中缓存
+- **避免重复解析**: 配置文件只解析一次
+- **轻量级验证**: 验证逻辑应该高效
+
+### 9.3 运维友好
+
+- **清晰的错误信息**: 配置错误时提供明确的错误位置和修复建议
+- **环境变量文档**: 为每个环境变量提供清晰的文档说明
+- **配置示例**: 提供完整的配置文件示例
+- **迁移工具**: 如需迁移配置格式，提供自动化工具
+
+## 10. 迁移指南
+
+### 10.1 从集中式配置迁移
+
+1. **分析现有配置**: 识别每个模块使用的配置项
+2. **创建模块配置**: 在对应模块中创建配置结构
+3. **更新构造函数**: 修改模块构造函数接收配置参数
+4. **测试验证**: 确保迁移后功能正常
+5. **清理旧配置**: 删除集中的配置结构
+
+### 10.2 向后兼容性
+
+- 保持YAML配置文件格式不变
+- 保持环境变量命名规则不变
+- 提供配置迁移工具（如需要）
+- 在文档中清晰标注变更
+
+这种模块化配置设计提供了更好的模块边界、更清晰的职责分离，同时保持了系统的可维护性和可测试性。

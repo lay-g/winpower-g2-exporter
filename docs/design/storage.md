@@ -157,21 +157,51 @@ type FileReader interface {
 
 ### 3.2 配置结构
 
-Storage模块不定义独立的配置结构体，直接使用config模块提供的StorageConfig：
+Storage模块定义自己的配置结构体，并通过注册机制与config模块集成：
 
 ```go
+// internal/storage/config.go
+package storage
+
+import "os"
+
+type Config struct {
+    DataDir         string      `yaml:"data_dir" validate:"required"`
+    FilePermissions os.FileMode `yaml:"file_permissions"`
+    SyncWrite       bool        `yaml:"sync_write"`
+    CreateDir       bool        `yaml:"create_dir"`
+}
+
+func DefaultConfig() *Config {
+    return &Config{
+        DataDir:         "./data",
+        FilePermissions: 0644,
+        SyncWrite:       true,
+        CreateDir:       true,
+    }
+}
+
+func (c *Config) Validate() error {
+    // 配置验证逻辑
+    return nil
+}
+
 // Storage模块通过构造函数接收配置参数
-func NewFileStorageManager(storageConfig *config.StorageConfig, logger Logger) StorageManager
+func NewFileStorageManager(config *Config, logger Logger) StorageManager
 ```
 
 **配置结构位置**：
-- StorageConfig定义在`internal/config/config.go`中
+- Config定义在`internal/storage/config.go`中
 - 包含DataDir、FilePermissions、SyncWrite、CreateDir等字段
 - 提供文件存储相关的配置参数
 
 **配置参数说明**：
-- `storageConfig`: 使用config模块的StorageConfig结构，包含文件存储的所有配置参数
+- `config`: 使用storage模块的Config结构，包含文件存储的所有配置参数
 - `logger`: 日志记录器实例
+
+**配置注册**：
+- Storage模块通过init()函数自动注册配置到config系统
+- Config模块发现并加载storage配置到统一配置结构中
 
 ## 4. 详细实现
 
@@ -180,12 +210,12 @@ func NewFileStorageManager(storageConfig *config.StorageConfig, logger Logger) S
 ```go
 // FileStorageManager 文件存储管理器
 type FileStorageManager struct {
-    config *config.StorageConfig // 存储配置参数
+    config *Config    // 存储配置参数
     logger logger.Logger         // 日志记录器
 }
 
 // NewFileStorageManager 创建文件存储管理器
-func NewFileStorageManager(storageConfig *config.StorageConfig, logger logger.Logger) *FileStorageManager {
+func NewFileStorageManager(config *Config, logger logger.Logger) *FileStorageManager {
     // 验证配置参数，如果为空则使用默认配置
     // 确保数据目录存在
     // 初始化存储管理器结构体
@@ -232,12 +262,12 @@ func (fsm *FileStorageManager) getDeviceFilePath(deviceID string) string {
 ```go
 // FileWriter 文件写入器
 type FileWriter struct {
-    config *config.StorageConfig // 存储配置参数
+    config *Config    // 存储配置参数
     logger logger.Logger         // 日志记录器
 }
 
 // NewFileWriter 创建文件写入器
-func NewFileWriter(storageConfig *config.StorageConfig, logger logger.Logger) *FileWriter {
+func NewFileWriter(config *Config, logger logger.Logger) *FileWriter {
     // 初始化文件写入器结构体
     // 设置存储配置参数引用
     // 获取日志记录器实例
@@ -261,12 +291,12 @@ func (fw *FileWriter) WriteDeviceFile(deviceID string, data *PowerData) error {
 ```go
 // FileStorageReader 文件存储读取器
 type FileStorageReader struct {
-    config *config.StorageConfig // 存储配置参数
+    config *Config    // 存储配置参数
     logger logger.Logger         // 日志记录器
 }
 
 // NewFileReader 创建文件读取器
-func NewFileReader(storageConfig *config.StorageConfig, logger logger.Logger) *FileStorageReader {
+func NewFileReader(config *Config, logger logger.Logger) *FileStorageReader {
     // 初始化文件读取器结构体
     // 设置存储配置参数引用
     // 获取日志记录器实例

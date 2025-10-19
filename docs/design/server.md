@@ -18,7 +18,7 @@ HTTP 服务器模块负责暴露最小且稳定的 Web 接口：`/metrics` 与 `
 
 ## 4. 依赖与输入/输出
 
-- 输入：`AppConfig.Server`、`Logger`、`MetricsService`、`HealthService`。
+- 输入：`server.Config`、`Logger`、`MetricsService`、`HealthService`。
 - 输出：HTTP 服务（监听端口）；`/metrics` 返回 Prometheus 文本；`/health` 返回 JSON。
 
 依赖关系（简化）：
@@ -31,23 +31,59 @@ server ──> metrics  ──> collector, energy
 
 ## 5. 配置结构
 
-Server模块不定义独立的配置结构体，直接使用config模块提供的ServerConfig：
+Server模块定义自己的配置结构体，并通过注册机制与config模块集成：
 
 ```go
+// internal/server/config.go
+package server
+
+import "time"
+
+type Config struct {
+    Port         int           `yaml:"port" validate:"min=1,max=65535"`
+    Host         string        `yaml:"host" validate:"required"`
+    Mode         string        `yaml:"mode" validate:"oneof=debug release test"`
+    ReadTimeout  time.Duration `yaml:"read_timeout" validate:"min=1s"`
+    WriteTimeout time.Duration `yaml:"write_timeout" validate:"min=1s"`
+    IdleTimeout  time.Duration `yaml:"idle_timeout" validate:"min=1s"`
+    EnablePprof  bool          `yaml:"enable_pprof"`
+}
+
+func DefaultConfig() *Config {
+    return &Config{
+        Port:         9090,
+        Host:         "0.0.0.0",
+        Mode:         "release",
+        ReadTimeout:  30 * time.Second,
+        WriteTimeout: 30 * time.Second,
+        IdleTimeout:  60 * time.Second,
+        EnablePprof:  false,
+    }
+}
+
+func (c *Config) Validate() error {
+    // 配置验证逻辑
+    return nil
+}
+
 // Server模块通过构造函数接收配置参数
-func NewHTTPServer(serverConfig *config.ServerConfig, logger Logger, metrics MetricsService, health HealthService) Server
+func NewHTTPServer(config *Config, logger Logger, metrics MetricsService, health HealthService) Server
 ```
 
 **配置结构位置**：
-- ServerConfig定义在`internal/config/config.go`中
+- Config定义在`internal/server/config.go`中
 - 包含Host、Port、Mode、ReadTimeout、WriteTimeout、IdleTimeout、EnablePprof等字段
-- 包含CORS和RateLimit子配置结构
+- 可扩展CORS和RateLimit子配置结构
 
 **配置参数说明**：
-- `serverConfig`: 使用config模块的ServerConfig结构，包含HTTP服务器的所有配置参数
+- `config`: 使用server模块的Config结构，包含HTTP服务器的所有配置参数
 - `logger`: 日志记录器实例
 - `metrics`: 指标服务接口
 - `health`: 健康检查服务接口
+
+**配置注册**：
+- Server模块通过init()函数自动注册配置到config系统
+- Config模块发现并加载server配置到统一配置结构中
 
 说明：
 - 为简化维护，不在服务器内直接提供 TLS/证书配置，生产环境建议由反向代理终结 TLS。
@@ -72,7 +108,7 @@ type Server interface {
 
 // 实现结构
 type HTTPServer struct {
-    cfg     *config.ServerConfig
+    cfg     *Config
     log     Logger
     engine  *gin.Engine
     srv     *http.Server
@@ -80,7 +116,7 @@ type HTTPServer struct {
     health  HealthService
 }
 
-func NewHTTPServer(serverConfig *config.ServerConfig, log Logger, metrics MetricsService, health HealthService) *HTTPServer {
+func NewHTTPServer(config *Config, log Logger, metrics MetricsService, health HealthService) *HTTPServer {
     // 1) 设置 Gin 模式
     // 2) 创建引擎与中间件
     // 3) 注册路由与 pprof（可选）

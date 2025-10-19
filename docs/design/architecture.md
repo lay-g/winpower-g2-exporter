@@ -143,10 +143,10 @@ winpower-config-migrate [command]
 ## 4. 模块划分（职责与输入/输出）
 
 1) config（配置）
-- 职责：集中管理配置加载（文件/环境变量），提供结构化配置对象。
-- 输入：配置文件、环境变量。
-- 输出：`Config`（包含 ServerConfig、WinPowerConfig、LogConfig、StorageConfig 等子配置）。
-- 设计原则：各模块的config结构体统一在config模块内定义，各模块不直接读取config模块内容，通过构造函数接收配置参数。
+- 职责：统一配置加载（文件/环境变量/命令行），配置模块注册管理，跨模块验证协调。
+- 输入：配置文件、环境变量、命令行参数。
+- 输出：`Config`（包含对各模块配置结构的引用）。
+- 设计原则：各模块在自己的模块内定义配置结构体，通过构造函数注入接收配置参数；config模块负责统一加载、绑定和验证。
 
 2) log（日志）
 - 职责：统一结构化日志，提供分级日志 API。
@@ -161,9 +161,9 @@ winpower-config-migrate [command]
 
 4) storage（存储）
 - 职责：持久化电能累计值与必要的元数据；可替换实现。
-- 输入：`Config.Storage`、`Logger`。
+- 输入：`storage.Config`、`Logger`。
 - 输出：`StorageManager` 接口（`Write(deviceID, *PowerData)`、`Read(deviceID) (*PowerData, error)`）。
-- 设计：不定义独立的Config结构，通过构造函数接收StorageConfig参数。
+- 设计：在自己的模块内定义Config结构，通过构造函数接收storage.Config参数。
 
 5) energy（电能计算）
 - 职责：基于功率读数做积分计算并持久化（Wh/kWh）。
@@ -182,9 +182,9 @@ winpower-config-migrate [command]
 
 8) server（HTTP 服务）
 - 职责：仅负责 HTTP 层的路由与中间件，暴露 `/metrics` 与 `/health`。
-- 输入：`Config.Server`、`Logger`、`metrics` 与 `health` 依赖。
+- 输入：`server.Config`、`Logger`、`metrics` 与 `health` 依赖。
 - 输出：HTTP 服务，优雅关闭与基本观察性（日志/pprof 可选）。
-- 设计：不定义独立的Config结构，通过构造函数接收ServerConfig参数。
+- 设计：在自己的模块内定义Config结构，通过构造函数接收server.Config参数。
 
 ## 5. 依赖关系（简化版）
 

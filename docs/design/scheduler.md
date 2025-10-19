@@ -81,21 +81,52 @@ type Scheduler interface {
 
 ### 3.2 配置结构
 
+Scheduler模块定义自己的配置结构体，并通过注册机制与config模块集成：
+
 ```go
-// SchedulerConfig 调度器配置（内部配置）
-type SchedulerConfig struct {
+// internal/scheduler/config.go
+package scheduler
+
+import "time"
+
+type Config struct {
     // 数据采集间隔（默认 5s）
-    CollectionInterval     time.Duration `yaml:"collection_interval" json:"collection_interval"`
+    CollectionInterval     time.Duration `yaml:"collection_interval" validate:"min=1s"`
 
     // 优雅关闭超时（默认 30s）
-    GracefulShutdownTimeout time.Duration `yaml:"graceful_shutdown_timeout" json:"graceful_shutdown_timeout"`
+    GracefulShutdownTimeout time.Duration `yaml:"graceful_shutdown_timeout" validate:"min=1s"`
 }
 
-func DefaultSchedulerConfig() *SchedulerConfig {
-    return &SchedulerConfig{
+func DefaultConfig() *Config {
+    return &Config{
         CollectionInterval:      5 * time.Second,
         GracefulShutdownTimeout: 30 * time.Second,
     }
+}
+
+func (c *Config) Validate() error {
+    // 配置验证逻辑
+    return nil
+}
+
+// SchedulerModuleConfig 实现ModuleConfig接口用于配置注册
+type SchedulerModuleConfig struct{}
+
+func (s *SchedulerModuleConfig) Default() interface{} {
+    return DefaultConfig()
+}
+
+func (s *SchedulerModuleConfig) Validate() error {
+    return nil
+}
+
+func (s *SchedulerModuleConfig) GetYAMLKey() string {
+    return "scheduler"
+}
+
+func init() {
+    // 注册Scheduler配置到config系统
+    // config.RegisterModule("scheduler", &SchedulerModuleConfig{})
 }
 ```
 
@@ -106,7 +137,7 @@ func DefaultSchedulerConfig() *SchedulerConfig {
 ```go
 // DefaultScheduler 简化实现
 type DefaultScheduler struct {
-    config        *SchedulerConfig
+    config        *Config
     winpowerClient WinPowerClient // 依赖：WinPower模块
     logger        logger.Logger
 
@@ -119,8 +150,8 @@ type DefaultScheduler struct {
     mu            sync.RWMutex
 }
 
-func NewDefaultScheduler(cfg *SchedulerConfig, wc WinPowerClient, l logger.Logger) *DefaultScheduler {
-    if cfg == nil { cfg = DefaultSchedulerConfig() }
+func NewDefaultScheduler(cfg *Config, wc WinPowerClient, l logger.Logger) *DefaultScheduler {
+    if cfg == nil { cfg = DefaultConfig() }
     return &DefaultScheduler{ config: cfg, winpowerClient: wc, logger: l }
 }
 

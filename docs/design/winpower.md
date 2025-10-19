@@ -154,7 +154,7 @@ type HTTPClient struct {
 
 ```go
 // NewHTTPClient 创建新的 HTTP 客户端
-func NewHTTPClient(cfg config.WinPowerConfig, logger *zap.Logger) *HTTPClient
+func NewHTTPClient(cfg *Config, logger *zap.Logger) *HTTPClient
 
 // Do 执行 HTTP 请求
 func (c *HTTPClient) Do(req *http.Request) (*http.Response, error)
@@ -247,19 +247,60 @@ type PowerInfo struct {
 
 ## 配置设计
 
-### WinPowerConfig配置结构
+### WinPower配置结构
+
+WinPower模块定义自己的配置结构体，并通过注册机制与config模块集成：
 
 ```go
-// WinPowerConfig WinPower模块配置
-type WinPowerConfig struct {
-    BaseURL         string        `yaml:"base_url" json:"base_url"`
-    Username        string        `yaml:"username" json:"username"`
-    Password        string        `yaml:"password" json:"password"`
-    Timeout         time.Duration `yaml:"timeout" json:"timeout"`
-    APITimeout      time.Duration `yaml:"api_timeout" json:"api_timeout"`
-    MaxRetries      int           `yaml:"max_retries" json:"max_retries"`
-    SkipSSLVerify   bool          `yaml:"skip_ssl_verify" json:"skip_ssl_verify"`
-    RefreshThreshold time.Duration `yaml:"refresh_threshold" json:"refresh_threshold"`
+// internal/winpower/config.go
+package winpower
+
+import "time"
+
+type Config struct {
+    BaseURL         string        `yaml:"base_url" validate:"required,url"`
+    Username        string        `yaml:"username" validate:"required"`
+    Password        string        `yaml:"password" validate:"required"`
+    Timeout         time.Duration `yaml:"timeout" validate:"min=1s"`
+    APITimeout      time.Duration `yaml:"api_timeout" validate:"min=1s"`
+    MaxRetries      int           `yaml:"max_retries" validate:"min=0,max=5"`
+    SkipSSLVerify   bool          `yaml:"skip_ssl_verify"`
+    RefreshThreshold time.Duration `yaml:"refresh_threshold" validate:"min=1m"`
+}
+
+func DefaultConfig() *Config {
+    return &Config{
+        Timeout:          15 * time.Second,
+        APITimeout:       10 * time.Second,
+        MaxRetries:       2,
+        SkipSSLVerify:    false,
+        RefreshThreshold: 5 * time.Minute,
+    }
+}
+
+func (c *Config) Validate() error {
+    // 配置验证逻辑
+    return nil
+}
+
+// WinPowerModuleConfig 实现ModuleConfig接口用于配置注册
+type WinPowerModuleConfig struct{}
+
+func (w *WinPowerModuleConfig) Default() interface{} {
+    return DefaultConfig()
+}
+
+func (w *WinPowerModuleConfig) Validate() error {
+    return nil
+}
+
+func (w *WinPowerModuleConfig) GetYAMLKey() string {
+    return "winpower"
+}
+
+func init() {
+    // 注册WinPower配置到config系统
+    // config.RegisterModule("winpower", &WinPowerModuleConfig{})
 }
 ```
 
