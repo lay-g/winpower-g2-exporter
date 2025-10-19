@@ -2,7 +2,7 @@
 
 ## 概述
 
-指标暴露模块（Metrics）是导出器的输出层，负责将 Collector 采集并经 Energy 模块累计后的数据，转化为 Prometheus 兼容的时序指标，并通过 HTTP `/metrics` 统一暴露。该重构版严格对齐最新的 Collector、Auth、Energy、Storage、Logging、Config 设计，强调简洁、标准化、性能与可观测性。
+指标暴露模块（Metrics）是导出器的输出层，负责将 WinPower 模块采集并经 Energy 模块累计后的数据，转化为 Prometheus 兼容的时序指标，并通过 HTTP `/metrics` 统一暴露。该重构版严格对齐最新的 WinPower、Energy、Storage、Logging、Config 设计，强调简洁、标准化、性能与可观测性。
 
 ## 设计原则
 
@@ -14,9 +14,9 @@
 
 ## 与上下游模块的契约
 
-- Collector
+- WinPower
   - 始终通过 `CollectDeviceData(ctx)` 完成数据拉取与解析，并触发 Energy 累计与 Storage 持久化。
-  - Metrics 模块提供类型安全的更新接口，Collector 在成功解析与累计后调用，用于更新设备、电源与连接相关指标。
+  - Metrics 模块提供类型安全的更新接口，WinPower 在成功解析与累计后调用，用于更新设备、电源与连接相关指标。
 
  
 
@@ -25,7 +25,7 @@
   - Metrics 只暴露 `energy_total_wh` 与 `power_watts`。间隔能耗通过 PromQL 在 Prometheus 侧计算。
 
 - Storage
-  - 提供设备级文件持久化，不被 Metrics 直接调用；Collector/能源累计完成后负责写入。
+  - 提供设备级文件持久化，不被 Metrics 直接调用；WinPower/能源累计完成后负责写入。
 
 - Logging（zap）
   - Metrics 更新与 HTTP 处理过程记录核心日志（级别可控），避免高频指标写入的冗长日志。
@@ -37,12 +37,12 @@
 
 ### 理解上下文：数据流与职责边界
 
-- 数据路径：Collector 解析设备数据 → Energy 维护累计电能 → Storage 持久化。
-- 统一入口与暴露：Scheduler 的 `Tick(5s)` 与 HTTP GET `/metrics` 都调用 `Collector.CollectDeviceData(ctx)` 完成采样与能耗累计 → MetricManager 更新指标 → 返回最新快照。
+- 数据路径：WinPower 解析设备数据 → Energy 维护累计电能 → Storage 持久化。
+- 统一入口与暴露：Scheduler 的 `Tick(5s)` 和 HTTP `/metrics` 请求都调用 `WinPower.CollectDeviceData(ctx)` 完成采样与能耗累计 → MetricManager 更新指标 → 返回最新快照。
 - 能耗语义：仅暴露瞬时功率 `power_watts` 与累计电能 `energy_total_wh`；任意时间窗口的间隔能耗通过 PromQL `increase()` 计算。
 - 标签策略：设备标签使用 `device_id/device_name/device_type`，必要时使用 `phase`；状态类标签严格控枚举，避免高基数。
-- 认证观测：Auth 模块更新 `token_valid`、`token_expiry_seconds` 与刷新计数；Metrics 不参与认证流程，仅记录观测结果。
-- Server 集成：将 `MetricManager.Handler()` 挂载到 `/metrics`。该端点会调用统一采集入口 `Collector.CollectDeviceData(ctx)`，待采集与累计完成后返回最新注册指标快照。
+- 认证观测：WinPower 模块内部管理Token状态并更新相关指标；Metrics 不参与认证流程，仅记录观测结果。
+- Server 集成：将 `MetricManager.Handler()` 挂载到 `/metrics`。该端点会调用采集方法并返回最新注册指标快照。
 
 ### 模块结构
 

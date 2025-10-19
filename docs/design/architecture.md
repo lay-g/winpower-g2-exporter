@@ -26,8 +26,7 @@ winpower-g2-exporter/
 │   │   └── log/                 # 日志模块
 │   ├── config/                  # 配置管理模块实现
 │   ├── storage/                 # 存储模块实现
-│   ├── auth/                    # 认证模块实现
-│   ├── collector/               # 采集模块实现
+│   ├── winpower/                # WinPower模块实现（合并auth和collector）
 │   ├── energy/                  # 电能计算模块实现
 │   ├── metrics/                 # 指标模块实现
 │   ├── server/                  # HTTP服务模块实现(含路由和中间件)
@@ -61,7 +60,6 @@ winpower-g2-exporter/
 - **`cmd/`**: 应用程序入口点，包含主程序和各类CLI工具
   - `exporter/`: 主HTTP服务器程序
   - `admin/`: 管理和运维CLI工具
-  - `benchmark/`: 性能测试和基准测试工具
   - `config-migrate/`: 配置格式迁移工具
 
 - **`internal/`**: 内部实现包，项目私有逻辑不对外暴露
@@ -69,8 +67,7 @@ winpower-g2-exporter/
     - `log/`: 结构化日志，提供统一的日志接口
   - `config/`: 配置管理，提供统一的配置加载和验证
   - `storage/`: 存储模块，定义存储接口和具体实现
-  - `auth/`: WinPower系统认证实现
-  - `collector/`: 设备数据采集实现
+  - `winpower/`: WinPower模块实现，负责认证管理和数据采集
   - `energy/`: 电能计算和累加实现
   - `metrics/`: Prometheus指标管理实现
   - `server/`: HTTP服务器和相关处理逻辑
@@ -135,16 +132,7 @@ winpower-admin config [command]
   generate    生成示例配置
 ```
 
-#### 3. 性能测试 (cmd/benchmark/)
-```bash
-# 运行基准测试
-winpower-benchmark [command]
-  collector   测试采集性能
-  storage     测试存储性能
-  full        完整系统性能测试
-```
-
-#### 4. 配置迁移 (cmd/config-migrate/)
+#### 3. 配置迁移 (cmd/config-migrate/)
 ```bash
 # 配置格式迁移
 winpower-config-migrate [command]
@@ -165,39 +153,34 @@ winpower-config-migrate [command]
 - 输入：`Config.Log`。
 - 输出：`Logger` 接口（供各模块使用）。
 
-3) auth（认证）
-- 职责：与 WinPower 系统交互，管理 Token 获取与刷新。
+3) winpower（WinPower模块）
+- 职责：负责与WinPower系统的认证管理、数据采集，并在成功采样后触发电能累计。
 - 输入：`Config.WinPower`、`Logger`。
-- 输出：`AuthManager` 接口（`GetToken()`、`RefreshToken()`、`IsTokenValid()`）。
-- 设计：不定义独立的Config结构，通过构造函数接收WinPowerConfig和刷新阈值参数。
+- 输出：`WinPowerClient` 接口（`CollectDeviceData()`、`GetConnectionStatus()`、`GetLastCollectionTime()`）；同时调用 `Energy.Calculate(deviceID, power)` 触发累计。
+- 设计：统一管理认证和采集逻辑，内部包含Token管理、HTTP客户端、数据解析等功能。
 
-4) collector（采集）
-- 职责：封装 WinPower API 调用，拉取设备与功率等实时数据，并在成功采样后触发电能累计。
-- 输入：`AuthManager`、`Config.WinPower`、`Logger`。
-- 输出：`CollectDeviceData(ctx)` 的执行结果与解析后的 `ParsedDeviceData`（包含功率/设备信息）；同时调用 `Energy.Calculate(deviceID, power)` 触发累计。
-
-5) storage（存储）
+4) storage（存储）
 - 职责：持久化电能累计值与必要的元数据；可替换实现。
 - 输入：`Config.Storage`、`Logger`。
 - 输出：`StorageManager` 接口（`Write(deviceID, *PowerData)`、`Read(deviceID) (*PowerData, error)`）。
 - 设计：不定义独立的Config结构，通过构造函数接收StorageConfig参数。
 
-6) energy（电能计算）
+5) energy（电能计算）
 - 职责：基于功率读数做积分计算并持久化（Wh/kWh）。
-- 输入：由 `collector` 在采样到瞬时功率后调用；依赖 `StorageManager` 与 `Logger`。
+- 输入：由 `winpower` 模块在采样到瞬时功率后调用；依赖 `StorageManager` 与 `Logger`。
 - 输出：写入累计电能值；对外提供查询接口 `Get(deviceID)`。
 
-7) scheduler（定时调度）
-- 职责：按固定周期驱动两类任务：每 1 分钟刷新 Token、每 5 秒触发采集。
-- 输入：`AuthManager`、`Collector`、`Logger`。
-- 输出：周期性执行、状态日志（`RefreshToken()` 与 `CollectDeviceData()`）。
+6) scheduler（定时调度）
+- 职责：按固定周期触发数据采集：每 5 秒调用 `winpower.CollectDeviceData()`。
+- 输入：`WinPowerClient`、`Logger`。
+- 输出：周期性执行、状态日志（`CollectDeviceData()`）。
 
-8) metrics（指标转换）
+7) metrics（指标转换）
 - 职责：管理并暴露指标注册表；对外提供 `/metrics` 的 HTTP Handler。
-- 输入：来自 `collector/energy/auth` 的指标更新（只写）；`Logger`。
+- 输入：来自 `winpower/energy` 的指标更新（只写）；`Logger`。
 - 输出：`MetricManager.Handler()` 返回注册指标快照（不触发采集或计算）。
 
-9) server（HTTP 服务）
+8) server（HTTP 服务）
 - 职责：仅负责 HTTP 层的路由与中间件，暴露 `/metrics` 与 `/health`。
 - 输入：`Config.Server`、`Logger`、`metrics` 与 `health` 依赖。
 - 输出：HTTP 服务，优雅关闭与基本观察性（日志/pprof 可选）。
@@ -215,35 +198,35 @@ winpower-config-migrate [command]
               ▼
 ┌───────────────────────────────────────────┐
 │                 metrics                   │
-│  - 暴露注册表最新快照（请求触发统一采集）│
-│  - collector/energy/auth 更新指标         │
+│  - 暴露注册表最新快照（不触发采集）       │
+│  - winpower/energy 更新指标               │
 └─────────────┬──────────────┬──────────────┘
               │              │
               ▼              ▼
 ┌──────────────────┐   ┌──────────────────┐
-│    collector     │   │      energy      │
-│ - 使用 auth      │   │ - 使用 storage   │
-│ - 配置 winpower  │   │ - 调度 scheduler │
-└─────────┬────────┘   └─────────┬────────┘
-          │                      │
-          ▼                      ▼
-┌──────────────────┐   ┌──────────────────┐
-│      auth        │   │     storage      │
-│ - 配置与日志     │   │ - 配置与日志     │
+│    winpower      │   │      energy      │
+│ - 认证与采集     │   │ - 使用 storage   │
+│ - 配置 winpower  │   │ - winpower 触发  │
 └─────────┬────────┘   └─────────┬────────┘
           │                      │
           ▼                      ▼
      ┌───────────┐          ┌───────────┐
      │   config   │          │    log     │
-     └───────────┘          └───────────┘
+     └───────────┘          └─────────┘
+          │                      │
+          ▼                      ▼
+     ┌───────────────────────────────────┐
+     │            storage                 │
+     │          - 配置与日志              │
+     └───────────────────────────────────┘
 ```
 
 依赖规则：
 - `server` 仅依赖 `metrics`（以及健康检查）与配置/日志。
-- `metrics` 不调用 `collector/energy`；仅暴露 Handler 并读取自身注册表；`collector/energy/auth` 在各自流程中更新指标。
-- `energy` 由 `collector` 触发计算，依赖 `storage` 写入累计值。
-- `collector` 依赖 `auth` 获取 Token；`auth/storage` 通过构造函数接收配置参数，依赖 `log`。
-- `scheduler` 触发 `auth.RefreshToken()` 与 `collector.CollectDeviceData()`，不依赖 `server`。
+- `metrics` 调用 `winpower.CollectDeviceData()` 触发采集，然后返回注册表最新快照。
+- `energy` 由 `winpower` 触发计算，依赖 `storage` 写入累计值。
+- `winpower` 负责认证和数据采集功能，内部管理Token生命周期和HTTP通信。
+- `scheduler` 调用 `winpower.CollectDeviceData()`，与metrics使用相同的采集方法。
 - **config依赖原则**：只有cmd模块依赖config模块进行配置加载和初始化，其他模块通过构造函数接收配置参数。
 
 ## 6. 数据流（运行时）
@@ -256,18 +239,21 @@ Prometheus GET /metrics
 server 解析路由与中间件
         ↓
  metrics.Handler()
-  - 调用统一采集入口 `collector.CollectDeviceData(ctx)`
-  - 采集与累计完成后返回注册表最新快照
+  - 调用 winpower.CollectDeviceData(ctx) 触发采集
+  - 返回注册表最新快照
 ```
 
 2) 电能计算路径（定时）：
 
 ```
-Tick(5s) → collector.CollectDeviceData(ctx)
+Tick(5s) → winpower.CollectDeviceData(ctx)
+  - 处理认证（如需要）
   - 采样设备数据并解析功率
   - energy.Calculate(deviceID, power)
   - storage.Write(deviceID, *PowerData)
 ```
+
+说明：两种触发方式（Prometheus拉取和调度器定时）使用相同的winpower.CollectDeviceData(ctx)方法，逻辑完全一致。
 
 ## 7. 接口概要（面向实现）
 
@@ -279,15 +265,8 @@ type Logger interface {
     Error(err error, msg string, fields ...any)
 }
 
-// 认证
-type AuthManager interface {
-    GetToken() (string, error)
-    RefreshToken() (string, error)
-    IsTokenValid() bool
-}
-
-// 采集
-type Collector interface {
+// WinPower客户端（合并认证和采集）
+type WinPowerClient interface {
     CollectDeviceData(ctx context.Context) error
     GetConnectionStatus() bool
     GetLastCollectionTime() time.Time
@@ -346,15 +325,14 @@ server:
     requests_per_minute: 1000
     burst: 100
 
-auth:
+winpower:
   base_url: "https://winpower.example.com"
   username: "admin"
   password: "secret"
   timeout: 15s
-
-winpower:
   api_timeout: 10s
   max_retries: 2
+  skip_ssl_verify: false
 
 scheduler:
   energy_interval: 5s         # 电能计算周期
@@ -369,13 +347,13 @@ log:
 
 ## 9. 测试与可观察性
 
-- 单元测试：对 `auth/collector/energy/storage/metrics` 分别进行接口级测试。
-- 模拟依赖：通过 `TokenProvider`、`EnergyStore` 的 Mock 隔离外部副作用。
+- 单元测试：对 `winpower/energy/storage/metrics` 分别进行接口级测试。
+- 模拟依赖：通过 `WinPowerClient`、`EnergyStore` 的 Mock 隔离外部副作用。
 - 观察性：服务层统一日志；`/debug/pprof` 可选开启用于性能诊断。
 
 ## 10. 演进建议
 
-- 设备类型扩展：在 `collector` 内扩展解析器与领域模型，不影响上层模块。
+- 设备类型扩展：在 `winpower` 内扩展解析器与领域模型，不影响上层模块。
 - 存储替换：通过实现 `EnergyStore` 接口替换文件存储为数据库或 KV。
-- 指标扩展：在 `metrics` 新增指标转换器，保持与 `Snapshot/Energy` 解耦。
+- 指标扩展：在 `metrics` 新增指标转换器，保持与 `Energy` 解耦。
 - 部署优化：生产环境优先使用反向代理终结 TLS；Exporter 保持纯 HTTP。

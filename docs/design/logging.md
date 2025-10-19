@@ -39,13 +39,6 @@
 | 灵活配置 | 支持多种配置方式           |
 | 生态完善 | 广泛使用，社区活跃         |
 
-### 2.2 性能对比
-
-```
-BenchmarkZap-8           5000000    236 ns/op      0 B/op     0 allocs/op
-BenchmarkLogrus-8        1000000   1503 ns/op    537 B/op    12 allocs/op
-BenchmarkStdlog-8        2000000    683 ns/op    112 B/op     2 allocs/op
-```
 
 ## 3. 架构设计
 
