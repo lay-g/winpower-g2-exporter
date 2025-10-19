@@ -367,7 +367,7 @@ import (
 
 func main() {
     // 创建存储配置
-    storageConfig := &config.StorageConfig{
+    storageConfig := &storage.Config{
         DataDir:         "./data",
         SyncWrite:       true,
         FilePermissions: 0644,
