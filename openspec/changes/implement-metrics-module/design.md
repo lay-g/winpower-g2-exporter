@@ -2,12 +2,12 @@
 
 ## 概述
 
-Metrics 模块是 WinPower G2 Exporter 的输出层，负责将采集的设备数据转化为标准的 Prometheus 时序指标，并通过 HTTP `/metrics` 端点暴露。本设计遵循模块化、高性能、标准化的原则，与已实现的 winpower、energy、storage、logging 模块紧密集成。
+Metrics 模块是 WinPower G2 Exporter 的输出层，负责将采集的设备数据转化为标准的 Prometheus 时序指标，并通过 HTTP `/metrics` 端点暴露。本设计遵循模块化、标准化的原则，与已实现的 winpower、energy、storage、logging 模块紧密集成。
 
 ## 设计原则
 
 1. **标准化**: 严格遵循 Prometheus 指标命名和标签规范
-2. **性能优先**: 采用单 Registry 和最小锁粒度设计
+2. **架构优化**: 采用单 Registry 和合理的锁粒度设计
 3. **简洁性**: 暴露必要且稳定的指标集合，避免过度标签
 4. **可观测性**: 提供完整的 Exporter 自监控指标
 5. **类型安全**: 提供类型安全的指标更新接口
@@ -128,7 +128,7 @@ type MetricManagerConfig struct {
     Subsystem string                `json:"subsystem" yaml:"subsystem"`     // 默认: "exporter"
     Registry  *prometheus.Registry  `json:"-" yaml:"-"`                    // 可选注入的Registry
 
-    // 性能配置
+    // 直方图配置
     RequestDurationBuckets []float64 `json:"request_duration_buckets" yaml:"request_duration_buckets"`
     CollectionDurationBuckets []float64 `json:"collection_duration_buckets" yaml:"collection_duration_buckets"`
     APIResponseBuckets     []float64 `json:"api_response_buckets" yaml:"api_response_buckets"`
@@ -245,11 +245,11 @@ type MetricManagerInterface interface {
 - 设备标签采用固定组合，不随意扩展
 - 状态类标签使用小集合枚举值
 
-## 性能设计
+## 架构优化
 
 ### 锁策略
 - 使用读写锁 (`sync.RWMutex`) 保护指标更新
-- 读操作（HTTP暴露）使用读锁，允许并发
+- 读操作（HTTP暴露）使用读锁，允许并发访问
 - 写操作（指标更新）使用写锁，确保数据一致性
 
 ### 内存管理
@@ -257,9 +257,9 @@ type MetricManagerInterface interface {
 - 预分配指标向量，避免动态扩容
 - 控制指标数量，避免内存泄漏
 
-### 热路径优化
+### 实现优化
 - 指标更新操作尽可能轻量
-- 避免在热路径进行复杂计算
+- 避免在关键路径进行复杂计算
 - 批量更新减少锁竞争
 
 ## 集成设计
@@ -321,12 +321,7 @@ func (m *MetricManager) Handler() http.Handler {
 ### 集成测试
 - 端到端测试完整的指标流转
 - 验证 HTTP `/metrics` 端点输出格式
-- 测试并发访问和数据一致性
-
-### 性能测试
-- 压力测试指标更新性能
-- 验证内存使用情况
-- 测试高并发 HTTP 请求处理
+- 测试数据访问的一致性
 
 ## 配置示例
 

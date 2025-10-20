@@ -50,7 +50,7 @@ Metrics Manager 必须能够注册和管理所有 Prometheus 指标，确保指�
 **And** 指标单位应该正确标注（watts, wh）
 
 ### Requirement: 指标更新接口
-系统必须提供类型安全的指标更新接口，支持批量更新和并发访问。系统 SHALL 提供线程安全的指标更新方法并确保数据一致性。
+系统必须提供类型安全的指标更新接口，支持批量更新。系统 SHALL 提供线程安全的指标更新方法并确保数据一致性。
 
 #### Scenario: 更新设备连接状态
 **Given** Metrics Manager 实例和设备数据
@@ -90,13 +90,6 @@ Metrics Manager 必须能够注册和管理所有 Prometheus 指标，确保指�
 **And** 响应该包含所有已注册的指标及其当前值
 **And** 响应该支持 OpenMetrics 格式
 
-#### Scenario: 处理并发指标请求
-**Given** Metrics Manager 实例和多个并发 HTTP 请求
-**When** 同时调用 `Handler()` 方法处理多个请求
-**Then** 系统应该正确处理所有并发请求
-**And** 每个响应都应该包含一致的指标快照
-**And** 处理过程不应该阻塞指标更新操作
-
 #### Scenario: 错误处理和状态码
 **Given** Metrics Manager 实例和异常情况
 **When** 发生内部错误或指标不可用
@@ -105,7 +98,7 @@ Metrics Manager 必须能够注册和管理所有 Prometheus 指标，确保指�
 **And** 系统应该继续正常处理其他请求
 
 ### Requirement: Exporter 自监控
-系统必须提供完整的 Exporter 自监控能力，包括运行状态、请求统计和性能指标。系统 SHALL 监控 Exporter 的运行状态并记录关键性能指标。
+系统必须提供完整的 Exporter 自监控能力，包括运行状态、请求统计和运行时指标。系统 SHALL 监控 Exporter 的运行状态并记录关键运行时指标。
 
 #### Scenario: 运行状态监控
 **Given** Metrics Manager 实例
@@ -154,7 +147,7 @@ Metrics Manager 必须能够注册和管理所有 Prometheus 指标，确保指�
 **And** 有效期应该以秒为单位
 
 ### Requirement: 配置管理
-系统必须支持灵活的配置管理，允许自定义指标命名空间、子系统和性能参数。系统 SHALL 支持配置化的指标参数并提供合理的默认值。
+系统必须支持灵活的配置管理，允许自定义指标命名空间和子系统。系统 SHALL 支持配置化的指标参数并提供合理的默认值。
 
 #### Scenario: 自定义命名空间和子系统
 **Given** 自定义的命名空间和子系统配置
@@ -162,17 +155,11 @@ Metrics Manager 必须能够注册和管理所有 Prometheus 指标，确保指�
 **Then** 所有指标名称应该使用指定的命名空间和子系统前缀
 **And** 指标名称格式应该为 `namespace_subsystem_metric`
 
-#### Scenario: 性能参数配置
-**Given** 自定义的直方图桶配置
-**When** 初始化 Metrics Manager
-**Then** 所有 Histogram 指标应该使用配置的桶边界
-**And** 桶设置应该适合对应的性能指标分布
-
 #### Scenario: 默认配置处理
 **Given** 部分配置缺失
 **When** 初始化 Metrics Manager
 **Then** 系统应该使用合理的默认值
-**And** 默认值应该确保良好的性能和可观测性
+**And** 默认值应该确保良好的可观测性
 
 ### Requirement: 错误处理和日志记录
 系统必须提供完善的错误处理和结构化日志记录，确保系统的可观测性和可维护性。系统 SHALL 提供结构化的错误处理并记录关键操作日志。
@@ -184,9 +171,9 @@ Metrics Manager 必须能够注册和管理所有 Prometheus 指标，确保指�
 **And** 错误不应该影响其他指标的更新
 **And** 系统应该继续正常运行
 
-#### Scenario: 并发访问安全
-**Given** 多个 goroutine 同时访问指标
-**When** 并发调用指标更新方法
+#### Scenario: 数据安全
+**Given** Metrics Manager 运行时状态
+**When** 执行指标更新操作
 **Then** 系统应该保证数据一致性
 **And** 不应该发生数据竞争或死锁
 **And** 所有更新操作都应该正确应用
@@ -198,29 +185,6 @@ Metrics Manager 必须能够注册和管理所有 Prometheus 指标，确保指�
 **And** 日志应该包含关键上下文信息
 **And** 日志级别应该根据操作重要性适当设置
 
-### Requirement: 性能和资源管理
-系统必须高效管理资源，确保在高负载下的性能表现。系统 SHALL 优化资源使用并确保在高负载下的性能稳定性。
-
-#### Scenario: 内存使用优化
-**Given** 长时间运行的 Metrics Manager
-**When** 持续更新和暴露指标
-**Then** 内存使用应该保持稳定
-**And** 不应该发生内存泄漏
-**And** 指标数量应该控制在合理范围内
-
-#### Scenario: 高并发性能
-**Given** 大量并发的指标更新和 HTTP 请求
-**When** 系统处理高负载
-**Then** 指标更新延迟应该 < 5ms
-**And** HTTP 响应时间应该 < 50ms
-**And** 系统应该保持稳定响应
-
-#### Scenario: 锁竞争优化
-**Given** 频繁的指标更新操作
-**When** 多个 goroutine 同时更新指标
-**Then** 锁竞争应该最小化
-**And** 读操作（HTTP 暴露）应该允许并发
-**And** 写操作应该尽可能短暂
 
 ## MODIFIED Requirements
 
@@ -245,4 +209,4 @@ Metrics Manager 必须能够注册和管理所有 Prometheus 指标，确保指�
 
 ### 无
 
-此规范文档定义了 Metrics Management 能力的完整需求，涵盖了初始化、指标管理、HTTP暴露、自监控、连接监控、配置管理、错误处理和性能优化等各个方面。所有需求都按照 TDD 原则设计，支持编写对应的测试用例。
+此规范文档定义了 Metrics Management 能力的完整需求，涵盖了初始化、指标管理、HTTP暴露、自监控、连接监控、配置管理、错误处理等各个方面。所有需求都按照 TDD 原则设计，支持编写对应的测试用例。
