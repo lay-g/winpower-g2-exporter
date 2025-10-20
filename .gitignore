@@ -87,3 +87,6 @@ translated-logs/
 ./winpower_exporter
 ./winpower-g2-exporter
 ./winpower-exporter
+
+# Storage Module test files
+internal/storage/data/test-device.txt
