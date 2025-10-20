@@ -9,6 +9,15 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+// Context keys for type-safe context values
+type contextKey string
+
+const (
+	RequestIDKey contextKey = "request_id"
+	TraceIDKey   contextKey = "trace_id"
+	UserIDKey    contextKey = "user_id"
+)
+
 // LogLevel represents different logging levels
 type LogLevel int
 
@@ -401,15 +410,22 @@ func (l *Logger) Close() error {
 // WithContext adds context information from the context to the logger
 func (l *Logger) WithContext(ctx context.Context) *Logger {
 	// Extract common context values like request ID, trace ID, etc.
-	if requestID := ctx.Value("request_id"); requestID != nil {
+	// Support both typed keys and string keys for backward compatibility
+	if requestID := ctx.Value(RequestIDKey); requestID != nil {
+		l = l.WithField("request_id", requestID)
+	} else if requestID := ctx.Value("request_id"); requestID != nil {
 		l = l.WithField("request_id", requestID)
 	}
 
-	if traceID := ctx.Value("trace_id"); traceID != nil {
+	if traceID := ctx.Value(TraceIDKey); traceID != nil {
+		l = l.WithField("trace_id", traceID)
+	} else if traceID := ctx.Value("trace_id"); traceID != nil {
 		l = l.WithField("trace_id", traceID)
 	}
 
-	if userID := ctx.Value("user_id"); userID != nil {
+	if userID := ctx.Value(UserIDKey); userID != nil {
+		l = l.WithField("user_id", userID)
+	} else if userID := ctx.Value("user_id"); userID != nil {
 		l = l.WithField("user_id", userID)
 	}
 

@@ -343,15 +343,11 @@ func TestLogger_WithContext(t *testing.T) {
 		fields:    make(map[string]interface{}),
 	}
 
-	// Define custom context key types to avoid collisions
-	type requestIDKey struct{}
-	type traceIDKey struct{}
-	type userIDKey struct{}
-
+	// Use typed keys to avoid lint warnings
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, requestIDKey{}, "req-123")
-	ctx = context.WithValue(ctx, traceIDKey{}, "trace-456")
-	ctx = context.WithValue(ctx, userIDKey{}, "user-789")
+	ctx = context.WithValue(ctx, RequestIDKey, "req-123")
+	ctx = context.WithValue(ctx, TraceIDKey, "trace-456")
+	ctx = context.WithValue(ctx, UserIDKey, "user-789")
 
 	newLogger := logger.WithContext(ctx)
 
