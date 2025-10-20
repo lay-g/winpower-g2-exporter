@@ -7,58 +7,35 @@ import (
 
 // InitializeOptions contains options for storage module initialization.
 type InitializeOptions struct {
-	// Config specifies the storage configuration. If nil, default config will be used.
+	// Config specifies the storage configuration. Required.
 	Config *Config
-
-	// Loader specifies the configuration loader for distributed config. Can be nil.
-	Loader ConfigLoader
-
-	// AutoCreateDir enables automatic directory creation during initialization.
-	AutoCreateDir bool
 
 	// ValidateOnInit enables validation of the data directory during initialization.
 	ValidateOnInit bool
-
-	// SkipIfExists skips directory creation if it already exists.
-	SkipIfExists bool
 }
 
-// DefaultInitializeOptions returns default initialization options.
-func DefaultInitializeOptions() *InitializeOptions {
+// NewInitializeOptions creates initialization options with the given config.
+func NewInitializeOptions(config *Config) *InitializeOptions {
 	return &InitializeOptions{
-		Config:         nil, // Will use defaults
-		Loader:         nil,
-		AutoCreateDir:  true,
+		Config:         config,
 		ValidateOnInit: true,
-		SkipIfExists:   true,
 	}
 }
 
 // Initialize initializes the storage module with the given options.
 // This function handles directory creation, validation, and configuration setup.
+// The config parameter must be provided by the caller - the storage module
+// does not handle configuration loading from any sources.
 func Initialize(opts *InitializeOptions) (*FileStorageManager, error) {
-	// Use default options if none provided
 	if opts == nil {
-		opts = DefaultInitializeOptions()
+		return nil, fmt.Errorf("initialization options cannot be nil")
+	}
+	if opts.Config == nil {
+		return nil, fmt.Errorf("configuration cannot be nil")
 	}
 
-	// Create configuration
-	var config *Config
-	if opts.Config != nil {
-		config = opts.Config.Clone()
-	} else if opts.Loader != nil {
-		config = NewConfigFromLoader(opts.Loader)
-	} else {
-		config = NewConfig()
-	}
-
-	// Apply environment variable overrides
-	config.ApplyEnvironmentOverrides()
-
-	// Set automatic directory creation based on options
-	if opts.AutoCreateDir {
-		config.CreateDir = true
-	}
+	// Clone configuration to avoid modifying the original
+	config := opts.Config.Clone()
 
 	// Validate configuration
 	if err := config.Validate(); err != nil {
@@ -81,24 +58,10 @@ func Initialize(opts *InitializeOptions) (*FileStorageManager, error) {
 	return manager, nil
 }
 
-// InitializeWithDefaults initializes the storage module with default settings.
-// This is the simplest way to initialize the storage module.
-func InitializeWithDefaults() (*FileStorageManager, error) {
-	return Initialize(DefaultInitializeOptions())
-}
-
-// InitializeWithPath initializes the storage module with a specific data directory.
-func InitializeWithPath(dataDir string) (*FileStorageManager, error) {
-	opts := DefaultInitializeOptions()
-	opts.Config = NewConfigWithPath(dataDir)
-	return Initialize(opts)
-}
-
-// InitializeWithLoader initializes the storage module using a configuration loader.
-func InitializeWithLoader(loader ConfigLoader) (*FileStorageManager, error) {
-	opts := DefaultInitializeOptions()
-	opts.Loader = loader
-	return Initialize(opts)
+// InitializeWithConfig initializes the storage module with the given configuration.
+// This is the recommended way to initialize the storage module.
+func InitializeWithConfig(config *Config) (*FileStorageManager, error) {
+	return Initialize(NewInitializeOptions(config))
 }
 
 // ValidateDataDirectory validates that the data directory exists and is accessible.
@@ -181,7 +144,7 @@ func GetStorageInfo(manager *FileStorageManager) map[string]interface{} {
 		"create_dir":       config.CreateDir,
 		"file_permissions": fmt.Sprintf("%#o", config.FilePermissions),
 		"dir_permissions":  fmt.Sprintf("%#o", config.DirPermissions),
-		"module_version":   "1.0.0",
+		"module_version":   ModuleVersion,
 	}
 }
 

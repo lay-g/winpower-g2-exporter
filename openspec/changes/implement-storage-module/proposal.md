@@ -10,6 +10,9 @@ WinPower G2 Exporter currently lacks data persistence capabilities, causing ener
 - Integrate storage module with energy module for data persistence
 - Add comprehensive test coverage and mock implementations
 - Update storage configuration to follow new modular config design
+- **Remove all configuration loading logic from storage module** (优化任务)
+- **Ensure storage module only defines Config struct without handling config sources**
+- **Simplify storage module to pure module design with external configuration**
 
 ## Design Principles
 - **Simplicity**: Simple file-based design, easy to understand and maintain

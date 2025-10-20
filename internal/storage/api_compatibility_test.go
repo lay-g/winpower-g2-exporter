@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"os"
 	"testing"
 )
 
@@ -106,22 +105,18 @@ func TestAPICompatibility_NewFileReaderWithConfig(t *testing.T) {
 	}
 }
 
-func TestAPICompatibility_EnvironmentVariables(t *testing.T) {
-	// Test that environment variable names are consistent
-	helpText := GetEnvironmentHelp()
-
-	expectedVars := []string{
-		"STORAGE_DATA_DIR",
-		"STORAGE_SYNC_WRITE",
-		"STORAGE_CREATE_DIR",
-		"STORAGE_FILE_PERMISSIONS",
-		"STORAGE_DIR_PERMISSIONS",
+func TestAPICompatibility_ModuleConstants(t *testing.T) {
+	// Test that module constants are properly defined
+	if ModuleVersion == "" {
+		t.Error("ModuleVersion should not be empty")
 	}
 
-	for _, envVar := range expectedVars {
-		if !containsAPI(helpText, envVar) {
-			t.Errorf("Environment variable %s not found in help text", envVar)
-		}
+	if ModuleName == "" {
+		t.Error("ModuleName should not be empty")
+	}
+
+	if ModuleName != "storage" {
+		t.Errorf("ModuleName = %s, expected 'storage'", ModuleName)
 	}
 }
 
@@ -143,132 +138,122 @@ func TestAPICompatibility_NewPowerData(t *testing.T) {
 	}
 }
 
-func TestAPICompatibility_ConfigLoaderInterface(t *testing.T) {
-	loader := NewMockConfigLoader()
+func TestAPICompatibility_ConfigValidation(t *testing.T) {
+	config := NewConfig()
 
-	// Test all interface methods are implemented
-	loader.Set("test_string", "value")
-	if value, found := loader.LoadString("test_string"); !found || value != "value" {
-		t.Error("LoadString() not working correctly")
+	// Test that default configuration is valid
+	if err := config.Validate(); err != nil {
+		t.Errorf("Default config should be valid: %v", err)
 	}
 
-	loader.Set("test_int", 42)
-	if value, found := loader.LoadInt("test_int"); !found || value != 42 {
-		t.Error("LoadInt() not working correctly")
+	// Test that we can clone a config
+	cloned := config.Clone()
+	// Clone() method should never return nil for valid config
+	if cloned.DataDir != config.DataDir {
+		t.Error("Cloned config should have same DataDir")
 	}
 
-	loader.Set("test_bool", true)
-	if value, found := loader.LoadBool("test_bool"); !found || !value {
-		t.Error("LoadBool() not working correctly")
-	}
-
-	loader.Set("test_slice", []string{"a", "b", "c"})
-	if value, found := loader.LoadStringSlice("test_slice"); !found || len(value) != 3 {
-		t.Error("LoadStringSlice() not working correctly")
+	// Test String method
+	configStr := config.String()
+	if configStr == "" {
+		t.Error("String() should not return empty string")
 	}
 }
 
-func TestAPICompatibility_ParseFileMode(t *testing.T) {
-	testCases := []struct {
-		input    string
-		expected os.FileMode
-		hasError bool
-	}{
-		{"644", 0644, false},
-		{"0755", 0755, false},
-		{"0600", 0600, false},
-		{"777", 0777, false},
-		{"", 0000, true},  // Invalid
-		{"invalid", 0000, true},  // Invalid
+func TestAPICompatibility_FilePermissions(t *testing.T) {
+	config := NewConfig()
+
+	// Test default file permissions
+	if config.FilePermissions == 0 {
+		t.Error("Default FilePermissions should not be 0")
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.input, func(t *testing.T) {
-			result, err := parseFileMode(tc.input)
+	// Test default directory permissions
+	if config.DirPermissions == 0 {
+		t.Error("Default DirPermissions should not be 0")
+	}
 
-			if tc.hasError && err == nil {
-				t.Errorf("parseFileMode(%s) should return error", tc.input)
-			}
+	// Test that permissions are reasonable
+	if config.FilePermissions != 0644 {
+		t.Errorf("Default FilePermissions = %o, expected 0644", config.FilePermissions)
+	}
 
-			if !tc.hasError {
-				if err != nil {
-					t.Errorf("parseFileMode(%s) should not return error: %v", tc.input, err)
-				}
-				if result != tc.expected {
-					t.Errorf("parseFileMode(%s) = %o, expected %o", tc.input, result, tc.expected)
-				}
-			}
-		})
+	if config.DirPermissions != 0755 {
+		t.Errorf("Default DirPermissions = %o, expected 0755", config.DirPermissions)
 	}
 }
 
 func TestAPICompatibility_InitializeFunctions(t *testing.T) {
 	tempDir := t.TempDir()
 
-	// Test InitializeWithDefaults
-	manager, err := InitializeWithDefaults()
-	if err != nil {
-		t.Fatalf("InitializeWithDefaults() error = %v", err)
-	}
-	if manager == nil {
-		t.Fatal("InitializeWithDefaults() returned nil")
-	}
+	// Test InitializeWithConfig
+	config := NewConfig()
+	config.DataDir = tempDir
 
-	// Test InitializeWithPath
-	manager, err = InitializeWithPath(tempDir)
+	manager, err := InitializeWithConfig(config)
 	if err != nil {
-		t.Fatalf("InitializeWithPath() error = %v", err)
+		t.Fatalf("InitializeWithConfig() error = %v", err)
 	}
 	if manager == nil {
-		t.Fatal("InitializeWithPath() returned nil")
+		t.Fatal("InitializeWithConfig() returned nil")
 	}
 
 	// Verify the data directory is correct
 	if manager.GetDataDir() != tempDir {
-		t.Errorf("InitializeWithPath() GetDataDir() = %s, expected %s", manager.GetDataDir(), tempDir)
+		t.Errorf("InitializeWithConfig() GetDataDir() = %s, expected %s", manager.GetDataDir(), tempDir)
 	}
 
-	// Test InitializeWithLoader
-	loader := NewMockConfigLoader()
-	loader.Set("data_dir", tempDir)
+	// Test Initialize with options
+	opts := NewInitializeOptions(config)
+	opts.ValidateOnInit = false
 
-	manager, err = InitializeWithLoader(loader)
+	manager, err = Initialize(opts)
 	if err != nil {
-		t.Fatalf("InitializeWithLoader() error = %v", err)
+		t.Fatalf("Initialize() error = %v", err)
 	}
 	if manager == nil {
-		t.Fatal("InitializeWithLoader() returned nil")
+		t.Fatal("Initialize() returned nil")
 	}
 
-	// Verify the data directory from loader
-	if manager.GetDataDir() != tempDir {
-		t.Errorf("InitializeWithLoader() GetDataDir() = %s, expected %s", manager.GetDataDir(), tempDir)
+	// Test error cases
+	_, err = Initialize(nil)
+	if err == nil {
+		t.Error("Initialize(nil) should return error")
 	}
-}
 
-func TestAPICompatibility_ConfigOperations(t *testing.T) {
-	config := NewConfig()
-
-	// Test ApplyEnvironmentOverrides method exists
-	config.ApplyEnvironmentOverrides()
-
-	// Test that the method doesn't panic
-	if config == nil {
-		t.Error("ApplyEnvironmentOverrides() should not panic")
+	invalidOpts := &InitializeOptions{Config: nil}
+	_, err = Initialize(invalidOpts)
+	if err == nil {
+		t.Error("Initialize with nil config should return error")
 	}
 }
 
-// Helper function for string contains check
-func containsAPI(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
-		(len(s) > len(substr) && containsSubstringAPI(s, substr)))
-}
+func TestAPICompatibility_ConfigSetDefaults(t *testing.T) {
+	config := &Config{}
 
-func containsSubstringAPI(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
+	// Test SetDefaults method
+	config.SetDefaults()
+
+	// Verify defaults are set
+	if config.DataDir == "" {
+		t.Error("SetDefaults() should set DataDir")
 	}
-	return false
+
+	if config.FilePermissions == 0 {
+		t.Error("SetDefaults() should set FilePermissions")
+	}
+
+	if config.DirPermissions == 0 {
+		t.Error("SetDefaults() should set DirPermissions")
+	}
+
+	// Test that NewConfig sets boolean defaults
+	newConfig := NewConfig()
+	if !newConfig.SyncWrite {
+		t.Error("NewConfig() should set SyncWrite to true")
+	}
+
+	if !newConfig.CreateDir {
+		t.Error("NewConfig() should set CreateDir to true")
+	}
 }

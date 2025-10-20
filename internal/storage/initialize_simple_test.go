@@ -6,24 +6,25 @@ import (
 	"testing"
 )
 
-func TestDefaultInitializeOptions(t *testing.T) {
-	opts := DefaultInitializeOptions()
+func TestNewInitializeOptions(t *testing.T) {
+	config := NewConfig()
+	opts := NewInitializeOptions(config)
 
 	if opts == nil {
-		t.Fatal("DefaultInitializeOptions() returned nil")
+		t.Fatal("NewInitializeOptions() returned nil")
 	}
 
 	// Check default values
-	if !opts.AutoCreateDir {
-		t.Error("AutoCreateDir should be true by default")
-	}
-
 	if !opts.ValidateOnInit {
 		t.Error("ValidateOnInit should be true by default")
 	}
 
-	if !opts.SkipIfExists {
-		t.Error("SkipIfExists should be true by default")
+	if opts.Config == nil {
+		t.Error("Config should not be nil")
+	}
+
+	if opts.Config != config {
+		t.Error("Config should be set to provided config")
 	}
 }
 
@@ -32,10 +33,7 @@ func TestInitialize_WithValidConfig(t *testing.T) {
 	config := NewConfig()
 	config.DataDir = tempDir
 
-	opts := &InitializeOptions{
-		Config:        config,
-		AutoCreateDir: true,
-	}
+	opts := NewInitializeOptions(config)
 
 	manager, err := Initialize(opts)
 	if err != nil {
@@ -88,11 +86,9 @@ func TestInitialize_WithNonExistentDirectory(t *testing.T) {
 	tempDir := filepath.Join(t.TempDir(), "nonexistent")
 	config := NewConfig()
 	config.DataDir = tempDir
+	config.CreateDir = true
 
-	opts := &InitializeOptions{
-		Config:        config,
-		AutoCreateDir: true,
-	}
+	opts := NewInitializeOptions(config)
 
 	manager, err := Initialize(opts)
 	if err != nil {
