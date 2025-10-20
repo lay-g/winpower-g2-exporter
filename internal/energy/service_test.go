@@ -11,8 +11,8 @@ import (
 
 // TestMockStorage implements StorageManager for testing
 type TestMockStorage struct {
-	data    map[string]*PowerData
-	readErr error
+	data     map[string]*PowerData
+	readErr  error
 	writeErr error
 }
 

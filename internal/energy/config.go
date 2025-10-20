@@ -8,10 +8,10 @@ import (
 // DefaultConfig returns a default configuration for the energy module.
 func DefaultConfig() *Config {
 	return &Config{
-		Precision:            0.01,  // 0.01 Wh precision
-		EnableStats:          true,  // Enable statistics by default
+		Precision:            0.01, // 0.01 Wh precision
+		EnableStats:          true, // Enable statistics by default
 		MaxCalculationTime:   1 * time.Second.Nanoseconds(),
-		NegativePowerAllowed: true,  // Allow negative power for energy feedback
+		NegativePowerAllowed: true, // Allow negative power for energy feedback
 	}
 }
 

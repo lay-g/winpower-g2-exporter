@@ -1,8 +1,8 @@
 package energy
 
 import (
-	"sync"
 	"go.uber.org/zap"
+	"sync"
 )
 
 // EnergyInterface defines the interface for energy calculation operations.
@@ -21,11 +21,11 @@ type EnergyInterface interface {
 // EnergyService implements the EnergyInterface with a simple single-threaded architecture.
 // All calculations are executed serially through a global lock to ensure data consistency.
 type EnergyService struct {
-	storage StorageManager       // Storage interface for data persistence
-	logger  *zap.Logger          // Structured logger
-	config  *Config             // Energy module configuration
-	mutex   sync.RWMutex        // Global lock for serial execution
-	stats   *SimpleStats        // Simple statistics tracking
+	storage StorageManager // Storage interface for data persistence
+	logger  *zap.Logger    // Structured logger
+	config  *Config        // Energy module configuration
+	mutex   sync.RWMutex   // Global lock for serial execution
+	stats   *SimpleStats   // Simple statistics tracking
 }
 
 // StorageManager defines the storage interface that energy module depends on.

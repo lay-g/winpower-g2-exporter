@@ -131,10 +131,10 @@ func (es *EnergyService) GetStats() *SimpleStats {
 	defer es.stats.mutex.RUnlock()
 
 	return &SimpleStats{
-		TotalCalculations:   es.stats.TotalCalculations,
-		TotalErrors:         es.stats.TotalErrors,
-		LastUpdateTime:      es.stats.LastUpdateTime,
-		AvgCalculationTime:  es.stats.AvgCalculationTime,
+		TotalCalculations:  es.stats.TotalCalculations,
+		TotalErrors:        es.stats.TotalErrors,
+		LastUpdateTime:     es.stats.LastUpdateTime,
+		AvgCalculationTime: es.stats.AvgCalculationTime,
 	}
 }
 

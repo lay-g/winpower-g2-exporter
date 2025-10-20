@@ -29,10 +29,10 @@ var (
 
 // EnergyError represents an error with additional context for energy calculations
 type EnergyError struct {
-	Operation string        // Operation that failed (e.g., "Calculate", "Get")
-	DeviceID  string        // Device ID involved in the operation
-	Cause     error         // Underlying error
-	Context   string        // Additional context
+	Operation string // Operation that failed (e.g., "Calculate", "Get")
+	DeviceID  string // Device ID involved in the operation
+	Cause     error  // Underlying error
+	Context   string // Additional context
 }
 
 // Error implements the error interface

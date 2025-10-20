@@ -48,7 +48,7 @@ func ExampleUsage() {
 
 	// Example 2: Subsequent calculation
 	time.Sleep(100 * time.Millisecond) // Wait a bit
-	power = 600.0 // Increased power
+	power = 600.0                      // Increased power
 
 	totalEnergy, err = energyService.Calculate(deviceID, power)
 	if err != nil {
