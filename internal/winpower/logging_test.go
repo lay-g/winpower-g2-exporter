@@ -91,10 +91,10 @@ func TestNewLogger(t *testing.T) {
 			t.Fatalf("NewLogger(nil) should not return error: %v", err)
 		}
 		defer func() {
-					if err := logger.Close(); err != nil {
-						t.Logf("Warning: failed to close logger: %v", err)
-					}
-				}()
+			if err := logger.Close(); err != nil {
+				t.Logf("Warning: failed to close logger: %v", err)
+			}
+		}()
 
 		if logger == nil {
 			t.Fatal("NewLogger() should not return nil logger")
@@ -115,10 +115,10 @@ func TestNewLogger(t *testing.T) {
 			t.Fatalf("NewLogger() should not return error: %v", err)
 		}
 		defer func() {
-					if err := logger.Close(); err != nil {
-						t.Logf("Warning: failed to close logger: %v", err)
-					}
-				}()
+			if err := logger.Close(); err != nil {
+				t.Logf("Warning: failed to close logger: %v", err)
+			}
+		}()
 
 		if logger == nil {
 			t.Fatal("NewLogger() should not return nil logger")
@@ -131,10 +131,10 @@ func TestNewLogger(t *testing.T) {
 			t.Fatalf("NewLoggerWithDefaults() should not return error: %v", err)
 		}
 		defer func() {
-					if err := logger.Close(); err != nil {
-						t.Logf("Warning: failed to close logger: %v", err)
-					}
-				}()
+			if err := logger.Close(); err != nil {
+				t.Logf("Warning: failed to close logger: %v", err)
+			}
+		}()
 
 		if logger == nil {
 			t.Fatal("NewLoggerWithDefaults() should not return nil logger")
@@ -259,10 +259,10 @@ func TestLogger_SpecializedLogging(t *testing.T) {
 	// Use zaptest logger for testing
 	zapLogger := zaptest.NewLogger(t)
 	defer func() {
-					if err := zapLogger.Sync(); err != nil {
-						t.Logf("Warning: failed to sync zap logger: %v", err)
-					}
-				}()
+		if err := zapLogger.Sync(); err != nil {
+			t.Logf("Warning: failed to sync zap logger: %v", err)
+		}
+	}()
 
 	logger := &Logger{
 		zapLogger: zapLogger,
@@ -299,10 +299,10 @@ func TestLogger_SpecializedLogging(t *testing.T) {
 func TestLogger_LogError(t *testing.T) {
 	zapLogger := zaptest.NewLogger(t)
 	defer func() {
-					if err := zapLogger.Sync(); err != nil {
-						t.Logf("Warning: failed to sync zap logger: %v", err)
-					}
-				}()
+		if err := zapLogger.Sync(); err != nil {
+			t.Logf("Warning: failed to sync zap logger: %v", err)
+		}
+	}()
 
 	logger := &Logger{
 		zapLogger: zapLogger,
@@ -332,10 +332,10 @@ func TestLogger_LogError(t *testing.T) {
 func TestLogger_WithContext(t *testing.T) {
 	zapLogger := zaptest.NewLogger(t)
 	defer func() {
-					if err := zapLogger.Sync(); err != nil {
-						t.Logf("Warning: failed to sync zap logger: %v", err)
-					}
-				}()
+		if err := zapLogger.Sync(); err != nil {
+			t.Logf("Warning: failed to sync zap logger: %v", err)
+		}
+	}()
 
 	logger := &Logger{
 		zapLogger: zapLogger,
@@ -390,15 +390,15 @@ func TestLogger_Production(t *testing.T) {
 		t.Fatalf("NewLogger() with production config should not return error: %v", err)
 	}
 	defer func() {
-					if err := logger.Close(); err != nil {
-						t.Logf("Warning: failed to close logger: %v", err)
-					}
-				}()
+		if err := logger.Close(); err != nil {
+			t.Logf("Warning: failed to close logger: %v", err)
+		}
+	}()
 	defer func() {
-					if err := os.Remove("/tmp/test-winpower.log"); err != nil {
-						t.Logf("Warning: failed to remove test log file: %v", err)
-					}
-				}()
+		if err := os.Remove("/tmp/test-winpower.log"); err != nil {
+			t.Logf("Warning: failed to remove test log file: %v", err)
+		}
+	}()
 
 	// Test basic logging
 	logger.Info("Test production logging")
@@ -418,10 +418,10 @@ func TestLogger_ConcurrentLogging(t *testing.T) {
 		fields:    make(map[string]interface{}),
 	}
 	defer func() {
-					if err := logger.Close(); err != nil {
-						t.Logf("Warning: failed to close logger: %v", err)
-					}
-				}()
+		if err := logger.Close(); err != nil {
+			t.Logf("Warning: failed to close logger: %v", err)
+		}
+	}()
 
 	// Test concurrent field additions and logging
 	done := make(chan bool, 10)

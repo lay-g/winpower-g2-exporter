@@ -272,10 +272,10 @@ func TestIntegration_ErrorHandling(t *testing.T) {
 			t.Fatalf("Failed to create WinPower client: %v", err)
 		}
 		defer func() {
-					if err := client.Close(); err != nil {
-						t.Logf("Warning: failed to close client: %v", err)
-					}
-				}()
+			if err := client.Close(); err != nil {
+				t.Logf("Warning: failed to close client: %v", err)
+			}
+		}()
 
 		// Test invalid configuration error
 		invalidConfig := &Config{
@@ -308,10 +308,10 @@ func TestIntegration_ErrorHandling(t *testing.T) {
 			t.Fatalf("Failed to create WinPower client: %v", err)
 		}
 		defer func() {
-					if err := client.Close(); err != nil {
-						t.Logf("Warning: failed to close client: %v", err)
-					}
-				}()
+			if err := client.Close(); err != nil {
+				t.Logf("Warning: failed to close client: %v", err)
+			}
+		}()
 
 		ctx := context.Background()
 		cancelledCtx, cancel := context.WithCancel(ctx)
@@ -374,10 +374,10 @@ func TestIntegration_ResourceManagement(t *testing.T) {
 			t.Fatalf("Failed to create WinPower client: %v", err)
 		}
 		defer func() {
-					if err := client.Close(); err != nil {
-						t.Logf("Warning: failed to close client: %v", err)
-					}
-				}()
+			if err := client.Close(); err != nil {
+				t.Logf("Warning: failed to close client: %v", err)
+			}
+		}()
 
 		storage := NewMockStorageManager()
 		energyConfig := energy.DefaultConfig()
@@ -409,10 +409,10 @@ func BenchmarkIntegration_CollectDeviceData(b *testing.B) {
 		b.Fatalf("Failed to create WinPower client: %v", err)
 	}
 	defer func() {
-					if err := client.Close(); err != nil {
-						b.Logf("Warning: failed to close client: %v", err)
-					}
-				}()
+		if err := client.Close(); err != nil {
+			b.Logf("Warning: failed to close client: %v", err)
+		}
+	}()
 
 	storage := &MockStorageManager{}
 	energyConfig := energy.DefaultConfig()
@@ -443,10 +443,10 @@ func BenchmarkIntegration_ClientOperations(b *testing.B) {
 		b.Fatalf("Failed to create WinPower client: %v", err)
 	}
 	defer func() {
-					if err := client.Close(); err != nil {
-						b.Logf("Warning: failed to close client: %v", err)
-					}
-				}()
+		if err := client.Close(); err != nil {
+			b.Logf("Warning: failed to close client: %v", err)
+		}
+	}()
 
 	ctx := context.Background()
 	if err := client.Connect(ctx); err != nil {

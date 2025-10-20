@@ -414,7 +414,6 @@ func (cs *ClientStats) recordConnection() {
 	cs.LastConnected = time.Now()
 }
 
-
 // recordError records a failed request
 func (cs *ClientStats) recordError() {
 	cs.mutex.Lock()

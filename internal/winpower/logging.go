@@ -195,7 +195,6 @@ func NewLoggerWithDefaults() (*Logger, error) {
 	return NewLogger(nil)
 }
 
-
 // WithField adds a field to all subsequent log messages
 func (l *Logger) WithField(key string, value interface{}) *Logger {
 	newLogger := &Logger{
