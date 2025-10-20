@@ -106,7 +106,7 @@ func TestTokenManager_Login(t *testing.T) {
 				client := &HTTPClient{}
 				manager, _ := NewTokenManager(config, client)
 
-				err := manager.Login(context.TODO())
+				err := manager.Login(nil) //nolint:staticcheck
 				if err == nil {
 					t.Error("Login() should return error for nil context")
 				}
@@ -238,7 +238,7 @@ func TestTokenManager_RefreshToken(t *testing.T) {
 				client := &HTTPClient{}
 				manager, _ := NewTokenManager(config, client)
 
-				err := manager.RefreshToken(context.TODO())
+				err := manager.RefreshToken(nil) //nolint:staticcheck
 				if err == nil {
 					t.Error("RefreshToken() should return error for nil context")
 				}

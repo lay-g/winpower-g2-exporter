@@ -110,7 +110,7 @@ func TestClient_Connect(t *testing.T) {
 					}
 				}()
 
-				err := client.Connect(context.TODO())
+				err := client.Connect(nil) //nolint:staticcheck
 				if err == nil {
 					t.Error("Connect() should return error for nil context")
 				}
