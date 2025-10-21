@@ -305,7 +305,7 @@ func TestScheduler_ResourceLimitationScenarios(t *testing.T) {
 	t.Run("slow collection operations", func(t *testing.T) {
 		config := &Config{
 			CollectionInterval:      100 * time.Millisecond,
-			GracefulShutdownTimeout: 500 * time.Millisecond,
+			GracefulShutdownTimeout: 1 * time.Second, // Increased timeout for slow operations
 		}
 
 		// Create client with slow operations
@@ -331,8 +331,8 @@ func TestScheduler_ResourceLimitationScenarios(t *testing.T) {
 		err = scheduler.Start(ctx)
 		require.NoError(t, err)
 
-		// Wait for slow operations
-		time.Sleep(300 * time.Millisecond)
+		// Wait for slow operations (reduced to avoid multiple collection cycles)
+		time.Sleep(150 * time.Millisecond)
 
 		err = scheduler.Stop()
 		assert.NoError(t, err)

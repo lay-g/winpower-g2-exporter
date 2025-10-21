@@ -1,9 +1,10 @@
 package log
 
 import (
+	"time"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"time"
 )
 
 // buildZapConfig 构建 zap 配置

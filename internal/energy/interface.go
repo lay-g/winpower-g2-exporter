@@ -1,8 +1,9 @@
 package energy
 
 import (
-	"go.uber.org/zap"
 	"sync"
+
+	"go.uber.org/zap"
 )
 
 // EnergyInterface defines the interface for energy calculation operations.

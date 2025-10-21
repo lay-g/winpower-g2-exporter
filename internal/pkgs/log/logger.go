@@ -3,9 +3,10 @@ package log
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"time"
 )
 
 // Field 定义日志字段类型
