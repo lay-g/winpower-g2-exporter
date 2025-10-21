@@ -1,0 +1,114 @@
+# WinPower G2 Exporter 高吞吐量配置
+# 适用于监控大量设备的高性能环境
+
+# 导出器基础配置
+server:
+  port: 9090
+  host: "0.0.0.0"
+  read_timeout: 120s
+  write_timeout: 120s
+  max_header_bytes: 2097152  # 2MB
+  enable_compression: true
+
+# WinPower 高性能配置
+winpower:
+  url: "https://winpower-ha.company.local:8443"
+  username: "exporter"
+  password: "${WINPOWER_PASSWORD}"
+  timeout: 60s
+  skip_ssl_verify: false
+  max_connections: 20      # 增加连接池大小
+  connection_timeout: 30s
+  keep_alive: 30s
+
+# 高吞吐量指标配置
+metrics:
+  namespace: "winpower"
+  subsystem: "exporter"
+
+  # 高吞吐量环境的请求时延桶
+  request_duration_buckets:
+    - 0.25   # 250ms
+    - 0.5    # 500ms
+    - 1      # 1s
+    - 2.5    # 2.5s
+    - 5      # 5s
+    - 10     # 10s
+    - 25     # 25s
+    - 60     # 1分钟
+
+  # 高吞吐量环境的采集时延桶 - 大量设备采集可能需要更长时间
+  collection_duration_buckets:
+    - 1      # 1s
+    - 2.5    # 2.5s
+    - 5      # 5s
+    - 15     # 15s
+    - 30     # 30s
+    - 60     # 1分钟
+    - 120    # 2分钟
+    - 300    # 5分钟
+
+  # 高吞吐量环境的 API 响应时延桶
+  api_response_buckets:
+    - 0.5    # 500ms
+    - 1      # 1s
+    - 2.5    # 2.5s
+    - 5      # 5s
+    - 15     # 15s
+    - 30     # 30s
+
+# 高吞吐量日志配置
+logging:
+  level: "warn"          # 减少日志输出
+  format: "json"
+  output: "/var/log/winpower-exporter/app.log"
+  max_size: 500          # MB
+  max_backups: 20
+  max_age: 7             # days
+  compress: true
+  async_logging: true    # 启用异步日志
+  buffer_size: 10000
+
+# 高性能数据存储
+storage:
+  data_dir: "/var/lib/winpower-exporter"
+  sync_write: false      # 异步写入提高性能
+  buffer_size: 1000
+  flush_interval: 5s
+  compression: true
+  enable_cache: true
+  cache_size: 10000
+  cache_ttl: 300s
+
+# 高吞吐量调度配置
+scheduler:
+  interval: 10s          # 较长的间隔减少负载
+  max_workers: 10        # 并发采集
+  worker_queue_size: 1000
+  batch_size: 50         # 批量处理设备
+
+# 性能优化配置
+performance:
+  enable_metrics_cache: true
+  metrics_cache_ttl: 30s
+  enable_batch_updates: true
+  batch_update_size: 100
+  gc_percent: 50         # 调整 GC 参数
+
+# 监控配置
+monitoring:
+  enable_pprof: true
+  pprof_path: "/debug/pprof"
+  enable_expvar: true
+  expvar_path: "/debug/vars"
+  memory_limit: "2Gi"
+  cpu_limit: "1000m"
+
+# 高可用配置
+high_availability:
+  enable_failover: true
+  backup_servers:
+    - "https://winpower-backup1.company.local:8443"
+    - "https://winpower-backup2.company.local:8443"
+  health_check_interval: 30s
+  failover_timeout: 10s

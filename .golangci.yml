@@ -1,0 +1,37 @@
+run:
+  timeout: 5m
+  issues-exit-code: 1
+  skip-dirs:
+    - test
+  skip-files:
+    - ".*_test\\.go$"
+
+version: "2"
+
+linters-settings:
+  unused:
+    check-exported: false
+
+  staticcheck:
+    checks:
+      - all
+    go: "1.25"
+    dot-import-whitelist:
+      - fmt
+    ignore-test: true
+
+issues:
+  exclude-rules:
+    # Exclude all linters from running on tests files
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+        - lll
+        - unconvert
+        - unparam
+        - nakedret
+        - prealloc
+        - gocritic

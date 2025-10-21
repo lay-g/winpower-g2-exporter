@@ -1,0 +1,67 @@
+# WinPower G2 Exporter 开发环境配置
+# 适用于开发和测试环境的配置
+
+# 导出器基础配置
+server:
+  port: 9091
+  host: "127.0.0.1"
+  read_timeout: 10s
+  write_timeout: 10s
+
+# WinPower 开发服务器配置
+winpower:
+  url: "http://localhost:8080"
+  username: "dev"
+  password: "dev123"
+  timeout: 10s
+  skip_ssl_verify: true
+
+# 指标配置 - 开发环境优化
+metrics:
+  namespace: "winpower"
+  subsystem: "exporter-dev"
+
+  # 更精细的请求时延桶，便于开发调试
+  request_duration_buckets:
+    - 0.01   # 10ms
+    - 0.025  # 25ms
+    - 0.05   # 50ms
+    - 0.1    # 100ms
+    - 0.25   # 250ms
+    - 0.5    # 500ms
+    - 1      # 1s
+    - 2.5    # 2.5s
+
+  # 较短的采集时延桶，适合快速响应的开发环境
+  collection_duration_buckets:
+    - 0.05   # 50ms
+    - 0.1    # 100ms
+    - 0.25   # 250ms
+    - 0.5    # 500ms
+    - 1      # 1s
+    - 2.5    # 2.5s
+    - 5      # 5s
+
+  # API 响应时延桶，本地环境通常更快
+  api_response_buckets:
+    - 0.01   # 10ms
+    - 0.025  # 25ms
+    - 0.05   # 50ms
+    - 0.1    # 100ms
+    - 0.25   # 250ms
+    - 0.5    # 500ms
+
+# 开发环境日志配置
+logging:
+  level: "debug"
+  format: "console"  # 开发时使用控制台格式便于阅读
+  output: "stdout"
+
+# 开发环境数据存储
+storage:
+  data_dir: "./dev-data"
+  sync_write: false  # 开发时不要求同步写入
+
+# 开发环境调度配置 - 更短的间隔便于快速测试
+scheduler:
+  interval: 2s

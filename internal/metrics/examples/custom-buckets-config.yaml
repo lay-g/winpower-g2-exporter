@@ -1,0 +1,75 @@
+# WinPower G2 Exporter 自定义桶配置示例
+# 展示如何根据不同的性能需求调整直方图桶配置
+
+# 导出器基础配置
+server:
+  port: 9090
+  host: "0.0.0.0"
+
+# WinPower 连接配置
+winpower:
+  url: "http://winpower-server:8080"
+  username: "admin"
+  password: "password"
+  timeout: 30s
+
+# 自定义指标配置
+metrics:
+  namespace: "winpower"
+  subsystem: "exporter-custom"
+
+  # 场景1: 快速响应环境 - 大部分请求在 100ms 内完成
+  request_duration_buckets:
+    - 0.001   # 1ms
+    - 0.005   # 5ms
+    - 0.01    # 10ms
+    - 0.025   # 25ms
+    - 0.05    # 50ms
+    - 0.1     # 100ms
+    - 0.25    # 250ms
+    - 0.5     # 500ms
+
+  # 场景2: 慢速网络环境 - 请求延迟较高
+  # collection_duration_buckets_alternative:
+  #   - 1      # 1s
+  #   - 2.5    # 2.5s
+  #   - 5      # 5s
+  #   - 10     # 10s
+  #   - 25     # 25s
+  #   - 60     # 1分钟
+  #   - 120    # 2分钟
+
+  # 场景3: 大量设备采集环境 - 采集时间较长
+  collection_duration_buckets:
+    - 5       # 5s
+    - 10      # 10s
+    - 30      # 30s
+    - 60      # 1分钟
+    - 120     # 2分钟
+    - 300     # 5分钟
+    - 600     # 10分钟
+
+  # 场景4: 高频 API 调用环境 - API 响应时间分析
+  api_response_buckets:
+    - 0.01    # 10ms
+    - 0.025   # 25ms
+    - 0.05    # 50ms
+    - 0.1     # 100ms
+    - 0.25    # 250ms
+    - 0.5     # 500ms
+    - 1       # 1s
+    - 2.5     # 2.5s
+
+# 日志配置
+logging:
+  level: "info"
+  format: "json"
+
+# 数据存储配置
+storage:
+  data_dir: "./data"
+  sync_write: true
+
+# 调度配置
+scheduler:
+  interval: 5s

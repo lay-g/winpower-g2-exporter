@@ -1,0 +1,97 @@
+# WinPower G2 Exporter 生产环境配置
+# 适用于高可用生产环境的配置
+
+# 导出器基础配置
+server:
+  port: 9090
+  host: "0.0.0.0"
+  read_timeout: 60s
+  write_timeout: 60s
+  max_header_bytes: 1048576  # 1MB
+
+# WinPower 生产服务器配置
+winpower:
+  url: "https://winpower-prod.company.com:8443"
+  username: "exporter"
+  password: "${WINPOWER_PASSWORD}"  # 从环境变量读取密码
+  timeout: 45s
+  skip_ssl_verify: false
+  max_retries: 3
+  retry_delay: 5s
+
+# 生产环境指标配置
+metrics:
+  namespace: "winpower"
+  subsystem: "exporter"
+
+  # 生产环境请求时延桶 - 考虑网络波动
+  request_duration_buckets:
+    - 0.1    # 100ms
+    - 0.25   # 250ms
+    - 0.5    # 500ms
+    - 1      # 1s
+    - 2.5    # 2.5s
+    - 5      # 5s
+    - 10     # 10s
+    - 30     # 30s
+
+  # 生产环境采集时延桶 - 考虑大量设备的情况
+  collection_duration_buckets:
+    - 0.5    # 500ms
+    - 1      # 1s
+    - 2.5    # 2.5s
+    - 5      # 5s
+    - 10     # 10s
+    - 30     # 30s
+    - 60     # 1分钟
+    - 120    # 2分钟
+
+  # 生产环境 API 响应时延桶 - 考虑服务器负载
+  api_response_buckets:
+    - 0.1    # 100ms
+    - 0.25   # 250ms
+    - 0.5    # 500ms
+    - 1      # 1s
+    - 2.5    # 2.5s
+    - 5      # 5s
+    - 10     # 10s
+
+# 生产环境日志配置
+logging:
+  level: "info"
+  format: "json"
+  output: "/var/log/winpower-exporter/app.log"
+  max_size: 100        # MB
+  max_backups: 10
+  max_age: 30          # days
+  compress: true
+
+# 生产环境数据存储
+storage:
+  data_dir: "/var/lib/winpower-exporter"
+  sync_write: true
+  backup_enabled: true
+  backup_interval: 1h
+  backup_retention: 168h  # 7 days
+
+# 生产环境调度配置
+scheduler:
+  interval: 5s
+  jitter: true          # 添加随机抖动避免雷群效应
+  jitter_factor: 0.1    # 10% 的抖动
+
+# 生产环境监控配置
+monitoring:
+  enable_pprof: false
+  health_check: true
+  metrics_path: "/metrics"
+  health_path: "/health"
+
+# 安全配置
+security:
+  enable_auth: false    # 通常由反向代理处理认证
+  cors_enabled: false
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 300
+    burst: 50
