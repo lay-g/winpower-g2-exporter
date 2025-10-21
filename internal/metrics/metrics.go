@@ -627,6 +627,7 @@ func roundToPrecision(value, precision float64) float64 {
 
 // Helper function to convert boolean to float64
 // TODO: Keep this function for future use when converting boolean metrics
+//
 //nolint:unused // This function is kept for future use
 func boolToFloat(b bool) float64 {
 	if b {
@@ -671,6 +672,7 @@ func (m *MetricManager) safeSetGauge(gauge prometheus.Gauge, value float64) erro
 }
 
 // safeIncCounter safely increments a counter metric with error handling.
+//
 //nolint:unused // This method is kept for future use
 func (m *MetricManager) safeIncCounter(counter prometheus.Counter) error {
 	defer func() {
@@ -687,6 +689,7 @@ func (m *MetricManager) safeIncCounter(counter prometheus.Counter) error {
 }
 
 // safeObserveHistogram safely observes a histogram value with error handling.
+//
 //nolint:unused // This method is kept for future use
 func (m *MetricManager) safeObserveHistogram(histogram prometheus.Observer, value float64) error {
 	defer func() {
@@ -825,6 +828,7 @@ func (m *MetricManager) GetLogLevel() string {
 }
 
 // shouldLog checks if a message should be logged based on the current log level.
+//
 //nolint:unused // This method is kept for future use
 func (m *MetricManager) shouldLog(messageLevel string) bool {
 	if m == nil {
