@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"go.uber.org/zap/zaptest"
 )
+
 
 // TestLogLevel_String tests the LogLevel String method
 func TestLogLevel_String(t *testing.T) {
@@ -257,7 +257,7 @@ func TestLogger_SensitiveDataMasking(t *testing.T) {
 // TestLogger_SpecializedLogging tests specialized logging methods
 func TestLogger_SpecializedLogging(t *testing.T) {
 	// Use zaptest logger for testing
-	zapLogger := zaptest.NewLogger(t)
+	zapLogger := newQuietLogger(t)
 	defer func() {
 		if err := zapLogger.Sync(); err != nil {
 			t.Logf("Warning: failed to sync zap logger: %v", err)
@@ -297,7 +297,7 @@ func TestLogger_SpecializedLogging(t *testing.T) {
 
 // TestLogger_LogError tests WinPower error logging
 func TestLogger_LogError(t *testing.T) {
-	zapLogger := zaptest.NewLogger(t)
+	zapLogger := newQuietLogger(t)
 	defer func() {
 		if err := zapLogger.Sync(); err != nil {
 			t.Logf("Warning: failed to sync zap logger: %v", err)
@@ -330,7 +330,7 @@ func TestLogger_LogError(t *testing.T) {
 
 // TestLogger_WithContext tests context integration
 func TestLogger_WithContext(t *testing.T) {
-	zapLogger := zaptest.NewLogger(t)
+	zapLogger := newQuietLogger(t)
 	defer func() {
 		if err := zapLogger.Sync(); err != nil {
 			t.Logf("Warning: failed to sync zap logger: %v", err)
@@ -413,7 +413,7 @@ func TestLogger_Production(t *testing.T) {
 // TestLogger_ConcurrentLogging tests concurrent logging safety
 func TestLogger_ConcurrentLogging(t *testing.T) {
 	logger := &Logger{
-		zapLogger: zaptest.NewLogger(t),
+		zapLogger: newQuietLogger(t),
 		config:    DefaultLoggerConfig(),
 		fields:    make(map[string]interface{}),
 	}

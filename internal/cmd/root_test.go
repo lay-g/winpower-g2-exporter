@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 )
 
 func TestNewRootCommand(t *testing.T) {
@@ -165,15 +166,25 @@ func TestRootCommand_Execute_Help(t *testing.T) {
 
 func TestRootCommand_Execute_Server(t *testing.T) {
 	rootCmd := NewRootCommand()
-	ctx := context.Background()
+
+	// Create a context with short timeout to prevent the test from hanging
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
 
 	// Test server command with minimal flags
+	start := time.Now()
 	err := rootCmd.Execute(ctx, []string{"server", "--log-level", "debug"})
-	if err != nil {
-		// We expect this to fail because server command is not yet fully implemented
-		if err.Error() != "server command not yet fully implemented" {
-			t.Errorf("Unexpected error executing server command: %v", err)
-		}
+	duration := time.Since(start)
+
+	// We expect the server command to be cancelled by context timeout
+	// Check that it returns within a reasonable time (should be close to our timeout + shutdown time)
+	if duration > 10*time.Second {
+		t.Errorf("Server command took too long to respond to context cancellation: %v", duration)
+	}
+
+	// We expect some error due to context cancellation
+	if err == nil {
+		t.Error("Expected server command to return an error due to context cancellation, but got nil")
 	}
 }
 

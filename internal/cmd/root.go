@@ -75,11 +75,10 @@ from WinPower devices, calculates energy consumption, and exports metrics.`,
 	// Add common flags to root command for default behavior
 	rootCmd.addCommonFlags(rootCmd.cmd)
 
-	// If no command is specified, run help command
+	// If no command is specified, show help using Cobra's built-in help system
 	rootCmd.cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		// Execute help command as default
-		helpCommand := NewHelpCommand(commands)
-		return helpCommand.Execute(cmd.Context(), args)
+		// Use Cobra's built-in help system instead of our custom help command
+		return cmd.Help()
 	}
 
 	return rootCmd
@@ -167,7 +166,7 @@ func (r *RootCommand) newHelpCommand(commands map[string]Commander) *cobra.Comma
 		Short: "Show help information",
 		Long:  "Display help information for any command or show general usage information.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Execute help command
+			// Execute our custom help command for specific functionality
 			helpCommand := NewHelpCommand(commands)
 			return helpCommand.Execute(cmd.Context(), args)
 		},

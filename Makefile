@@ -99,22 +99,26 @@ clean: ## 清理构建产物
 # 测试命令
 test: ## 运行单元测试
 	@echo "运行单元测试..."
-	$(GOTEST) -v ./...
+	GO_TEST=1 $(GOTEST) -v ./...
 
 test-coverage: ## 运行测试并生成覆盖率报告
 	@echo "运行测试并生成覆盖率报告..."
-	$(GOTEST) -v -coverprofile=coverage.out ./...
+	GO_TEST=1 $(GOTEST) -v -coverprofile=coverage.out ./...
 	$(GOCMD) tool cover -html=coverage.out -o coverage.html
 	@echo "覆盖率报告已生成: coverage.html"
 
 test-integration: ## 运行集成测试
 	@echo "运行集成测试..."
-	$(GOTEST) -v -tags=integration ./test/integration/...
+	GO_TEST=1 $(GOTEST) -v -tags=integration ./test/integration/...
 
 test-all: ## 运行所有测试
 	@echo "运行所有测试..."
 	$(MAKE) test
 	$(MAKE) test-integration
+
+test-quiet: ## 运行静默测试（仅显示错误）
+	@echo "运行静默测试..."
+	GO_TEST=1 LOG_LEVEL=error $(GOTEST) ./...
 
 # 开发命令
 fmt: ## 格式化 Go 代码

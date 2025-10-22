@@ -85,6 +85,22 @@ func DevelopmentDefaults() *Config {
 	}
 }
 
+// TestDefaults 返回测试环境默认配置
+func TestDefaults() *Config {
+	return &Config{
+		Level:        ErrorLevel, // 只显示错误级别日志
+		Format:       ConsoleFormat,
+		Output:       StderrOutput, // 输出到stderr避免与测试输出混合
+		Filename:     "",
+		MaxSize:      100,
+		MaxAge:       30,
+		MaxBackups:   10,
+		Compress:     false,
+		EnableColor:  false, // 测试时禁用颜色
+		EnableCaller: false, // 测试时禁用调用者信息
+	}
+}
+
 // Validate 验证配置的有效性
 func (c *Config) Validate() error {
 	// 验证日志级别

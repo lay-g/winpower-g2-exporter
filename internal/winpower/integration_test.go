@@ -8,12 +8,32 @@ import (
 	"time"
 
 	"github.com/lay-g/winpower-g2-exporter/internal/energy"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest"
 )
 
+// newQuietLogger 创建一个静默的测试日志器，只输出错误级别
+func newQuietLogger(t *testing.T) *zap.Logger {
+	zapOpts := []zaptest.LoggerOption{
+		zaptest.Level(zapcore.ErrorLevel), // 只记录 error 级别
+		zaptest.WrapOptions(zap.AddCaller()), // 添加调用者信息用于调试
+	}
+	return zaptest.NewLogger(t, zapOpts...)
+}
+
+// newQuietLoggerForBenchmark 创建用于基准测试的静默日志器
+func newQuietLoggerForBenchmark(b *testing.B) *zap.Logger {
+	zapOpts := []zaptest.LoggerOption{
+		zaptest.Level(zapcore.ErrorLevel), // 只记录 error 级别
+		zaptest.WrapOptions(zap.AddCaller()), // 添加调用者信息用于调试
+	}
+	return zaptest.NewLogger(b, zapOpts...)
+}
+
 // TestIntegration_WinPowerEnergy tests the complete integration between WinPower and Energy modules
 func TestIntegration_WinPowerEnergy(t *testing.T) {
-	logger := zaptest.NewLogger(t)
+	logger := newQuietLogger(t)
 
 	tests := []struct {
 		name string
@@ -337,7 +357,7 @@ func TestIntegration_ErrorHandling(t *testing.T) {
 
 // TestIntegration_ResourceManagement tests resource management and cleanup
 func TestIntegration_ResourceManagement(t *testing.T) {
-	logger := zaptest.NewLogger(t)
+	logger := newQuietLogger(t)
 
 	t.Run("client_lifecycle_management", func(t *testing.T) {
 		config := DefaultConfig()
@@ -416,7 +436,7 @@ func BenchmarkIntegration_CollectDeviceData(b *testing.B) {
 
 	storage := &MockStorageManager{}
 	energyConfig := energy.DefaultConfig()
-	logger := zaptest.NewLogger(b)
+	logger := newQuietLoggerForBenchmark(b)
 	energyService := energy.NewEnergyService(storage, logger, energyConfig)
 
 	ctx := context.Background()

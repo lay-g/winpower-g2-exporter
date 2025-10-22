@@ -13,8 +13,19 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest"
 )
+
+// newQuietLogger 创建一个静默的测试日志器，只输出错误级别
+func newQuietLogger(t *testing.T) *zap.Logger {
+	zapOpts := []zaptest.LoggerOption{
+		zaptest.Level(zapcore.ErrorLevel), // 只记录 error 级别
+		zaptest.WrapOptions(zap.AddCaller()), // 添加调用者信息用于调试
+	}
+	return zaptest.NewLogger(t, zapOpts...)
+}
 
 // TestMetricManagerConfig_Validate tests configuration validation.
 func TestMetricManagerConfig_Validate(t *testing.T) {
@@ -106,7 +117,7 @@ func TestMetricManagerConfig_Validate(t *testing.T) {
 
 // TestNewMetricManager_Success tests successful MetricManager creation.
 func TestNewMetricManager_Success(t *testing.T) {
-	logger := zaptest.NewLogger(t)
+	logger := newQuietLogger(t)
 	config := DefaultConfig()
 	config.Registry = prometheus.NewRegistry()
 
@@ -128,7 +139,7 @@ func TestNewMetricManager_Success(t *testing.T) {
 
 // TestNewMetricManager_InvalidConfig tests MetricManager creation with invalid config.
 func TestNewMetricManager_InvalidConfig(t *testing.T) {
-	logger := zaptest.NewLogger(t)
+	logger := newQuietLogger(t)
 	config := &MetricManagerConfig{
 		Namespace:                 "", // Invalid: empty namespace
 		Subsystem:                 "exporter",
@@ -156,7 +167,7 @@ func TestNewMetricManager_NilLogger(t *testing.T) {
 
 // createTestMetricManager creates a test MetricManager with valid configuration.
 func createTestMetricManager(t *testing.T) *MetricManager {
-	logger := zaptest.NewLogger(t)
+	logger := newQuietLogger(t)
 	config := DefaultConfig()
 	config.Registry = prometheus.NewRegistry()
 
@@ -382,7 +393,7 @@ func TestMetricManager_SetDeviceCount(t *testing.T) {
 
 // TestMetricManager_NotInitialized verifies that methods handle not initialized state gracefully.
 func TestMetricManager_NotInitialized(t *testing.T) {
-	logger := zaptest.NewLogger(t)
+	logger := newQuietLogger(t)
 	manager := &MetricManager{
 		logger: logger, // Initialize logger to avoid panic
 	} // Not initialized
@@ -1415,7 +1426,7 @@ func TestMetricManager_EmptyLabelValidation(t *testing.T) {
 
 // TestMetricManager_NotInitialized tests that device methods handle not initialized state gracefully.
 func TestMetricManager_DeviceMetrics_NotInitialized(t *testing.T) {
-	logger := zaptest.NewLogger(t)
+	logger := newQuietLogger(t)
 	manager := &MetricManager{
 		logger: logger, // Initialize logger to avoid panic
 	} // Not initialized
@@ -1844,7 +1855,7 @@ func TestMetricManager_SetEnergyTotalWh_Precision(t *testing.T) {
 
 // TestMetricManager_EnergyMetrics_NotInitialized tests that energy methods handle not initialized state gracefully.
 func TestMetricManager_EnergyMetrics_NotInitialized(t *testing.T) {
-	logger := zaptest.NewLogger(t)
+	logger := newQuietLogger(t)
 	manager := &MetricManager{
 		logger: logger, // Initialize logger to avoid panic
 	} // Not initialized
@@ -2110,7 +2121,7 @@ func TestHandler_BasicFunctionality(t *testing.T) {
 
 // TestHandler_ErrorHandling tests error handling in the HTTP metrics handler.
 func TestHandler_ErrorHandling(t *testing.T) {
-	logger := zaptest.NewLogger(t)
+	logger := newQuietLogger(t)
 	manager := &MetricManager{
 		logger: logger, // Initialize logger to avoid panic
 		// Note: Not initializing metrics (initialized = false)
@@ -2354,7 +2365,7 @@ func TestHandler_ConcurrentAccess(t *testing.T) {
 
 // TestMetricManager_ErrorHandling tests error handling mechanisms.
 func TestMetricManager_ErrorHandling(t *testing.T) {
-	logger := zaptest.NewLogger(t)
+	logger := newQuietLogger(t)
 
 	t.Run("uninitialized manager", func(t *testing.T) {
 		mm := &MetricManager{} // Uninitialized manager
@@ -2419,7 +2430,7 @@ func TestMetricManager_ErrorHandling(t *testing.T) {
 
 // TestMetricManager_LogLevels tests log level control.
 func TestMetricManager_LogLevels(t *testing.T) {
-	logger := zaptest.NewLogger(t)
+	logger := newQuietLogger(t)
 
 	mm, err := NewMetricManager(DefaultConfig(), logger)
 	require.NoError(t, err)
@@ -2443,7 +2454,7 @@ func TestMetricManager_LogLevels(t *testing.T) {
 
 // TestMetricManager_ErrorRecovery tests error recovery capabilities.
 func TestMetricManager_ErrorRecovery(t *testing.T) {
-	logger := zaptest.NewLogger(t)
+	logger := newQuietLogger(t)
 
 	mm, err := NewMetricManager(DefaultConfig(), logger)
 	require.NoError(t, err)
@@ -2482,7 +2493,7 @@ func TestMetricManager_ErrorRecovery(t *testing.T) {
 
 // TestMetricManager_LogLevelControl tests log level management.
 func TestMetricManager_LogLevelControl(t *testing.T) {
-	logger := zaptest.NewLogger(t)
+	logger := newQuietLogger(t)
 
 	mm, err := NewMetricManager(DefaultConfig(), logger)
 	require.NoError(t, err)

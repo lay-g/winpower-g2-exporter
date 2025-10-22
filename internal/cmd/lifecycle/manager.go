@@ -139,6 +139,20 @@ func (lm *LifecycleManager) Start(ctx context.Context) error {
 		zap.Bool("enhanced_shutdown", lm.useEnhancedShutdown),
 	)
 
+	// If a context is provided, watch for cancellation
+	if ctx != nil {
+		go func() {
+			select {
+			case <-ctx.Done():
+				lm.logger.Info("External context cancelled, triggering shutdown")
+				lm.cancel() // Cancel the internal context
+			case <-lm.ctx.Done():
+				// Internal context already cancelled
+				return
+			}
+		}()
+	}
+
 	// Setup enhanced signal handling if enabled
 	if lm.useEnhancedShutdown {
 		if err := lm.setupEnhancedSignalHandling(); err != nil {
@@ -210,7 +224,10 @@ func (lm *LifecycleManager) WaitForShutdown() error {
 			return lm.Stop(lm.ctx)
 		case <-lm.ctx.Done():
 			lm.logger.Info("Context cancelled, initiating shutdown")
-			return lm.Stop(context.Background())
+			// Use a timeout context for shutdown to prevent hanging
+			shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			return lm.Stop(shutdownCtx)
 		}
 	} else {
 		// Use legacy signal handling
@@ -223,7 +240,10 @@ func (lm *LifecycleManager) WaitForShutdown() error {
 			return lm.Stop(lm.ctx)
 		case <-lm.ctx.Done():
 			lm.logger.Info("Context cancelled, initiating shutdown")
-			return lm.Stop(context.Background())
+			// Use a timeout context for shutdown to prevent hanging
+			shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			return lm.Stop(shutdownCtx)
 		}
 	}
 }

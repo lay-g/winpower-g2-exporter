@@ -3,6 +3,9 @@ package log
 import (
 	"context"
 	"fmt"
+	"os"
+	"runtime"
+	"strings"
 	"sync"
 	"sync/atomic"
 )
@@ -54,10 +57,13 @@ func ResetGlobal() {
 // Default 获取默认的全局日志器
 func Default() Logger {
 	if atomic.LoadInt32(&globalInitialized) == 0 {
+		// 检测是否在测试环境中
+		config := getDefaultConfigForEnvironment()
+
 		// 如果未初始化，使用默认配置初始化
-		if err := Init(DefaultConfig()); err != nil {
+		if err := Init(config); err != nil {
 			// 如果初始化失败，创建一个最基本的日志器
-			logger, _ := NewLogger(DefaultConfig())
+			logger, _ := NewLogger(config)
 			globalLogger.Store(logger)
 			atomic.StoreInt32(&globalInitialized, 1)
 		}
@@ -70,7 +76,8 @@ func Default() Logger {
 	}
 
 	// 如果加载失败，创建临时日志器
-	logger, _ := NewLogger(DefaultConfig())
+	config := getDefaultConfigForEnvironment()
+	logger, _ := NewLogger(config)
 	globalLogger.Store(logger)
 	return logger
 }
@@ -211,4 +218,38 @@ func SetFile(filename string, maxSize, maxAge, maxBackups int, compress bool) er
 	config := DefaultConfig()
 	config.SetFile(filename, maxSize, maxAge, maxBackups, compress)
 	return Reconfigure(config)
+}
+
+// isTestEnvironment 检测是否在测试环境中运行
+func isTestEnvironment() bool {
+	// 检查环境变量
+	if os.Getenv("GO_TEST") == "1" || os.Getenv("TEST") == "1" {
+		return true
+	}
+
+	// 检查调用栈
+	if pc, file, _, ok := runtime.Caller(2); ok {
+		funcName := runtime.FuncForPC(pc).Name()
+		fileName := file
+
+		// 检查是否来自测试文件
+		if strings.HasSuffix(fileName, "_test.go") {
+			return true
+		}
+
+		// 检查函数名是否包含测试
+		if strings.Contains(funcName, ".Test") || strings.Contains(funcName, ".Benchmark") {
+			return true
+		}
+	}
+
+	return false
+}
+
+// getDefaultConfigForEnvironment 根据环境返回合适的默认配置
+func getDefaultConfigForEnvironment() *Config {
+	if isTestEnvironment() {
+		return TestDefaults()
+	}
+	return DefaultConfig()
 }

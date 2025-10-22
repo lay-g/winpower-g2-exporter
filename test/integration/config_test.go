@@ -574,9 +574,3 @@ winpower:
 	})
 }
 
-// TestConfigHotReload tests configuration hot reload functionality
-func TestConfigHotReload(t *testing.T) {
-	// This test is a placeholder for hot reload functionality
-	// TODO: Implement hot reload functionality and test
-	t.Skip("Hot reload functionality not yet implemented")
-}

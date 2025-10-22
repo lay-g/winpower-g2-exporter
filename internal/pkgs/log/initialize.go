@@ -162,6 +162,24 @@ func CreateLoggerForTesting() Logger {
 	return NewTestLogger()
 }
 
+// CreateProductionLoggerForTesting 创建生产日志器的测试版本（高级别，减少输出）
+func CreateProductionLoggerForTesting() (Logger, error) {
+	config := TestDefaults()
+	return NewLogger(config)
+}
+
+// InitForTesting 初始化测试环境日志器
+func InitForTesting() error {
+	config := TestDefaults()
+	return Init(config)
+}
+
+// ResetForTesting 重置全局日志器为测试配置（测试开始时调用）
+func ResetForTesting() {
+	ResetGlobal()
+	_ = InitForTesting()
+}
+
 // CreateNoopLogger 创建无操作日志器
 func CreateNoopLogger() Logger {
 	return NewNoopLogger()
