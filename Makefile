@@ -3,13 +3,14 @@
 # 变量定义
 BINARY_NAME=winpower-g2-exporter
 MIGRATION_TOOL=winpower-config-migrate
-VERSION=v0.1.0
-BUILD_TIME=$(shell date +%Y-%m-%dT%H:%M:%S%z)
-GIT_COMMIT=$(shell git rev-parse --short HEAD)
+VERSION=$(shell cat VERSION 2>/dev/null || echo "dev")
+DISPLAY_VERSION=v$(shell cat VERSION 2>/dev/null || echo "dev")
+BUILD_TIME=$(shell date -u '+%Y-%m-%d_%H:%M:%S')
+GIT_COMMIT=$(shell git rev-parse HEAD 2>/dev/null || echo "unknown")
 GO_VERSION=$(shell go version | awk '{print $$3}')
 
 # 构建标志
-LDFLAGS=-ldflags "-X main.Version=$(VERSION) -X main.BuildTime=$(BUILD_TIME) -X main.GitCommit=$(GIT_COMMIT) -X main.GoVersion=$(GO_VERSION)"
+LDFLAGS=-ldflags "-X github.com/lay-g/winpower-g2-exporter/internal/cmd.Version=$(VERSION) -X github.com/lay-g/winpower-g2-exporter/internal/cmd.BuildTime=$(BUILD_TIME) -X github.com/lay-g/winpower-g2-exporter/internal/cmd.GitCommit=$(GIT_COMMIT) -X github.com/lay-g/winpower-g2-exporter/internal/cmd.ApplicationVersion=$(DISPLAY_VERSION)"
 
 # 目录
 BUILD_DIR=build

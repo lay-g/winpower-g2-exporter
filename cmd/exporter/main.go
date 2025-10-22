@@ -1,7 +1,7 @@
 package main
 
 import (
-	"flag"
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -11,6 +11,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/lay-g/winpower-g2-exporter/internal/cmd"
 	"github.com/lay-g/winpower-g2-exporter/internal/energy"
 	"github.com/lay-g/winpower-g2-exporter/internal/pkgs/config"
 	"github.com/lay-g/winpower-g2-exporter/internal/pkgs/log"
@@ -18,13 +19,6 @@ import (
 	"github.com/lay-g/winpower-g2-exporter/internal/server"
 	"github.com/lay-g/winpower-g2-exporter/internal/storage"
 	"github.com/lay-g/winpower-g2-exporter/internal/winpower"
-)
-
-const (
-	// ApplicationVersion represents the current version of the application
-	ApplicationVersion = "1.0.0"
-	// ApplicationName represents the name of the application
-	ApplicationName = "winpower-g2-exporter"
 )
 
 // AppConfig represents the complete application configuration
@@ -36,101 +30,56 @@ type AppConfig struct {
 	Scheduler *scheduler.Config `yaml:"scheduler"`
 }
 
-// AppConfigOverrides represents CLI parameter overrides for configuration
-type AppConfigOverrides struct {
-	WinPowerURL           string
-	WinPowerUsername      string
-	WinPowerPassword      string
-	WinPowerTimeout       time.Duration
-	WinPowerMaxRetries    int
-	WinPowerSkipTLSVerify bool
-	StorageDataDir        string
-	StorageSyncWrite      bool
-	ServerPort            int
-	ServerHost            string
-	ServerMode            string
-	SchedulerInterval     time.Duration
-	EnergyPrecision       float64
-}
-
 // Application represents the main application structure
 type Application struct {
 	logger    log.Logger
 	config    *AppConfig
+	args      *cmd.CLIArgs
 	shutdown  chan os.Signal
 	startTime time.Time
 }
 
 func main() {
-	// Define command line flags
-	var (
-		configFile = flag.String("config", "", "Path to configuration file (YAML)")
-		logLevel   = flag.String("log-level", "info", "Log level (debug, info, warn, error)")
-		version    = flag.Bool("version", false, "Show version information")
-		help       = flag.Bool("help", false, "Show help information")
+	ctx := context.Background()
 
-		// WinPower module flags
-		winpowerURL           = flag.String("winpower-url", "", "WinPower server URL (e.g., https://winpower.example.com:8080)")
-		winpowerUsername      = flag.String("winpower-username", "", "WinPower username")
-		winpowerPassword      = flag.String("winpower-password", "", "WinPower password")
-		winpowerTimeout       = flag.Duration("winpower-timeout", 0, "WinPower request timeout (e.g., 30s)")
-		winpowerMaxRetries    = flag.Int("winpower-max-retries", 0, "WinPower maximum retry attempts")
-		winpowerSkipTLSVerify = flag.Bool("winpower-skip-ssl-verify", false, "Skip TLS certificate verification")
+	// Create root command
+	rootCmd := cmd.NewRootCommand()
 
-		// Storage module flags
-		storageDataDir   = flag.String("storage-data-dir", "", "Storage data directory path")
-		storageSyncWrite = flag.Bool("storage-sync-write", false, "Enable synchronous writes")
-
-		// Server module flags
-		serverPort = flag.Int("port", 0, "Server port (default: 9090)")
-		serverHost = flag.String("host", "", "Server host (default: 0.0.0.0)")
-		serverMode = flag.String("server-mode", "", "Server mode (debug, release, test)")
-
-		// Scheduler module flags
-		schedulerInterval = flag.Duration("scheduler-interval", 0, "Scheduler collection interval (e.g., 5s)")
-
-		// Energy module flags
-		energyPrecision = flag.Float64("energy-precision", 0, "Energy calculation precision (e.g., 0.01)")
-	)
-	flag.Parse()
-
-	if *help {
-		showHelp()
-		return
+	// Execute command
+	if err := rootCmd.Execute(ctx, os.Args[1:]); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
 	}
+}
 
-	if *version {
-		showVersion()
-		return
-	}
-
+// Run starts the application with the given CLI arguments
+func Run(ctx context.Context, cliArgs *cmd.CLIArgs) error {
 	// Initialize logger
 	logConfig := log.DefaultConfig()
-	logConfig.Level = log.Level(*logLevel)
+	logConfig.Level = log.Level(cliArgs.LogLevel)
 	logger, err := log.NewLogger(logConfig)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to initialize logger: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("failed to initialize logger: %w", err)
 	}
 	defer func() { _ = logger.Sync() }()
 
 	logger.Info("Starting WinPower G2 Exporter",
-		zap.String("version", ApplicationVersion),
-		zap.String("config_file", *configFile),
-		zap.String("log_level", *logLevel),
+		zap.String("version", cmd.ApplicationVersion),
+		zap.String("config_file", cliArgs.Config),
+		zap.String("log_level", cliArgs.LogLevel),
 	)
 
 	// Load application configuration
 	logger.Info("Loading application configuration",
-		zap.String("config_file", *configFile),
-		zap.String("config_source", determineConfigSource(*configFile)),
+		zap.String("config_file", cliArgs.Config),
+		zap.String("config_source", determineConfigSource(cliArgs.Config)),
 	)
 
-	appConfig, err := loadApplicationConfig(*configFile)
+	appConfig, err := loadApplicationConfig(cliArgs.Config)
 	if err != nil {
 		logger.Fatal("Failed to load configuration",
 			zap.Error(err),
-			zap.String("config_file", *configFile),
+			zap.String("config_file", cliArgs.Config),
 		)
 	}
 
@@ -143,25 +92,9 @@ func main() {
 	)
 
 	// Apply CLI parameter overrides
-	cliOverrides := AppConfigOverrides{
-		WinPowerURL:           *winpowerURL,
-		WinPowerUsername:      *winpowerUsername,
-		WinPowerPassword:      *winpowerPassword,
-		WinPowerTimeout:       *winpowerTimeout,
-		WinPowerMaxRetries:    *winpowerMaxRetries,
-		WinPowerSkipTLSVerify: *winpowerSkipTLSVerify,
-		StorageDataDir:        *storageDataDir,
-		StorageSyncWrite:      *storageSyncWrite,
-		ServerPort:            *serverPort,
-		ServerHost:            *serverHost,
-		ServerMode:            *serverMode,
-		SchedulerInterval:     *schedulerInterval,
-		EnergyPrecision:       *energyPrecision,
-	}
-
-	if hasCLIOverrides(cliOverrides) {
+	if cliArgs.HasOverrides() {
 		logger.Info("Applying CLI parameter overrides")
-		applyCLIOverrides(appConfig, cliOverrides)
+		applyCLIOverrides(appConfig, cliArgs)
 		logger.Info("Configuration updated with CLI overrides",
 			zap.String("storage", appConfig.Storage.String()),
 			zap.String("winpower", appConfig.WinPower.String()),
@@ -192,6 +125,7 @@ func main() {
 	app := &Application{
 		logger:    logger,
 		config:    appConfig,
+		args:      cliArgs,
 		shutdown:  make(chan os.Signal, 1),
 		startTime: time.Now(),
 	}
@@ -207,12 +141,14 @@ func main() {
 	logger.Info("Application stopped gracefully",
 		zap.Duration("uptime", time.Since(app.startTime)),
 	)
+
+	return nil
 }
 
 // loadApplicationConfig loads the complete application configuration
 func loadApplicationConfig(configFile string) (*AppConfig, error) {
 	// Determine config file path
-	if configFile == "" {
+	if configFile == "" || configFile == "./config.yaml" {
 		// Try default locations
 		defaultPaths := []string{
 			"config.yaml",
@@ -303,53 +239,53 @@ func loadServerConfig(loader *config.Loader) (*server.Config, error) {
 }
 
 // applyCLIOverrides applies CLI parameter overrides to the loaded configuration
-func applyCLIOverrides(config *AppConfig, overrides AppConfigOverrides) {
+func applyCLIOverrides(config *AppConfig, args *cmd.CLIArgs) {
 	// Apply WinPower overrides
-	if overrides.WinPowerURL != "" {
-		config.WinPower.URL = overrides.WinPowerURL
+	if args.WinPowerURL != "" {
+		config.WinPower.URL = args.WinPowerURL
 	}
-	if overrides.WinPowerUsername != "" {
-		config.WinPower.Username = overrides.WinPowerUsername
+	if args.WinPowerUsername != "" {
+		config.WinPower.Username = args.WinPowerUsername
 	}
-	if overrides.WinPowerPassword != "" {
-		config.WinPower.Password = overrides.WinPowerPassword
+	if args.WinPowerPassword != "" {
+		config.WinPower.Password = args.WinPowerPassword
 	}
-	if overrides.WinPowerTimeout > 0 {
-		config.WinPower.Timeout = overrides.WinPowerTimeout
+	if args.WinPowerTimeout > 0 {
+		config.WinPower.Timeout = args.WinPowerTimeout
 	}
-	if overrides.WinPowerMaxRetries > 0 {
-		config.WinPower.MaxRetries = overrides.WinPowerMaxRetries
+	if args.WinPowerMaxRetries > 0 {
+		config.WinPower.MaxRetries = args.WinPowerMaxRetries
 	}
-	if overrides.WinPowerSkipTLSVerify {
-		config.WinPower.SkipTLSVerify = overrides.WinPowerSkipTLSVerify
+	if args.WinPowerSkipTLSVerify {
+		config.WinPower.SkipTLSVerify = args.WinPowerSkipTLSVerify
 	}
 
 	// Apply Storage overrides
-	if overrides.StorageDataDir != "" {
-		config.Storage.DataDir = overrides.StorageDataDir
+	if args.DataDir != "" {
+		config.Storage.DataDir = args.DataDir
 	}
 	// Note: boolean flags override regardless of value
-	config.Storage.SyncWrite = overrides.StorageSyncWrite
+	config.Storage.SyncWrite = args.SyncWrite
 
 	// Apply Server overrides
-	if overrides.ServerPort > 0 {
-		config.Server.Port = overrides.ServerPort
+	if args.Port > 0 {
+		config.Server.Port = args.Port
 	}
-	if overrides.ServerHost != "" {
-		config.Server.Host = overrides.ServerHost
+	if args.ServerHost != "" {
+		config.Server.Host = args.ServerHost
 	}
-	if overrides.ServerMode != "" {
-		config.Server.Mode = overrides.ServerMode
+	if args.ServerMode != "" {
+		config.Server.Mode = args.ServerMode
 	}
 
 	// Apply Scheduler overrides
-	if overrides.SchedulerInterval > 0 {
-		config.Scheduler.CollectionInterval = overrides.SchedulerInterval
+	if args.SchedulerInterval > 0 {
+		config.Scheduler.CollectionInterval = args.SchedulerInterval
 	}
 
 	// Apply Energy overrides
-	if overrides.EnergyPrecision > 0 {
-		config.Energy.Precision = overrides.EnergyPrecision
+	if args.EnergyPrecision > 0 {
+		config.Energy.Precision = args.EnergyPrecision
 	}
 }
 
@@ -381,22 +317,6 @@ func determineConfigSource(configFile string) string {
 	return "defaults_and_environment"
 }
 
-// hasCLIOverrides checks if any CLI parameters are set (non-zero/non-empty)
-func hasCLIOverrides(overrides AppConfigOverrides) bool {
-	return overrides.WinPowerURL != "" ||
-		overrides.WinPowerUsername != "" ||
-		overrides.WinPowerPassword != "" ||
-		overrides.WinPowerTimeout > 0 ||
-		overrides.WinPowerMaxRetries > 0 ||
-		overrides.WinPowerSkipTLSVerify ||
-		overrides.StorageDataDir != "" ||
-		overrides.ServerPort > 0 ||
-		overrides.ServerHost != "" ||
-		overrides.ServerMode != "" ||
-		overrides.SchedulerInterval > 0 ||
-		overrides.EnergyPrecision > 0
-}
-
 // Run starts the application and blocks until shutdown signal
 func (app *Application) Run() error {
 	app.logger.Info("Starting application components")
@@ -417,109 +337,4 @@ func (app *Application) Run() error {
 	// TODO: Graceful shutdown of components
 
 	return nil
-}
-
-// showVersion displays version information
-func showVersion() {
-	fmt.Printf("%s version %s\n", ApplicationName, ApplicationVersion)
-}
-
-// showHelp displays help information
-func showHelp() {
-	fmt.Printf(`WinPower G2 Exporter
-
-USAGE:
-  %s [OPTIONS]
-
-BASIC OPTIONS:
-  -config string            Path to configuration file (YAML)
-  -log-level string         Log level (debug, info, warn, error) [default: info]
-  -version                  Show version information
-  -help                     Show this help message
-
-WINPOWER MODULE OPTIONS:
-  -winpower-url string      WinPower server URL (e.g., https://winpower.example.com:8080)
-  -winpower-username string WinPower username
-  -winpower-password string WinPower password
-  -winpower-timeout duration WinPower request timeout (e.g., 30s)
-  -winpower-max-retries int WinPower maximum retry attempts [default: 3]
-  -winpower-skip-ssl-verify Skip TLS certificate verification [default: false]
-
-STORAGE MODULE OPTIONS:
-  -storage-data-dir string  Storage data directory path [default: ./data]
-  -storage-sync-write       Enable synchronous writes [default: true]
-
-SERVER MODULE OPTIONS:
-  -port int                 Server port [default: 9090]
-  -host string              Server host [default: 0.0.0.0]
-  -server-mode string       Server mode (debug, release, test) [default: release]
-
-SCHEDULER MODULE OPTIONS:
-  -scheduler-interval duration Scheduler collection interval [default: 5s]
-
-ENERGY MODULE OPTIONS:
-  -energy-precision float   Energy calculation precision [default: 0.01]
-
-CONFIGURATION:
-  The exporter loads configuration from multiple sources in priority order:
-  1. Command line flags (highest priority)
-  2. Environment variables (WINPOWER_EXPORTER_ prefix)
-  3. Configuration files (YAML)
-  4. Default values (lowest priority)
-
-  Environment variables:
-    WINPOWER_EXPORTER_WINPOWER_URL="https://winpower.example.com:8080"
-    WINPOWER_EXPORTER_STORAGE_DATA_DIR="/var/lib/winpower-exporter"
-    WINPOWER_EXPORTER_SERVER_PORT="9090"
-    WINPOWER_EXPORTER_SCHEDULER_COLLECTION_INTERVAL="5s"
-
-  Example configuration file:
-    storage:
-      data_dir: "./data"
-      sync_write: true
-
-    winpower:
-      url: "https://winpower.example.com:8080"
-      username: "admin"
-      password: "secret"
-      timeout: "30s"
-      max_retries: 3
-      skip_tls_verify: false
-
-    server:
-      port: 9090
-      host: "0.0.0.0"
-      mode: "release"
-
-    scheduler:
-      collection_interval: "5s"
-
-    energy:
-      precision: 0.01
-
-EXAMPLES:
-  # Start with default configuration
-  %s
-
-  # Start with custom configuration file
-  %s -config /etc/winpower-exporter/config.yaml
-
-  # Start with CLI parameters
-  %s -winpower-url https://winpower.example.com:8080 -winpower-username admin -port 8080
-
-  # Start with environment variables and custom config file
-  WINPOWER_EXPORTER_WINPOWER_PASSWORD="secret" %s -config config.yaml
-
-  # Start with debug logging and pprof enabled
-  %s -log-level debug -server-mode debug
-
-  # Show version information
-  %s -version
-
-  # Show help
-  %s -help
-
-For more information, see the documentation at:
-  https://github.com/lay-g/winpower-g2-exporter
-`, ApplicationName, ApplicationName, ApplicationName, ApplicationName, ApplicationName, ApplicationName, ApplicationName, ApplicationName)
 }
