@@ -64,7 +64,7 @@ from WinPower devices, calculates energy consumption, and exports metrics.`,
 	helpCmdInstance := NewHelpCommand(commands)
 	helpCmdInstance.SetCommands(commands)
 
-	// Set server as default command
+	// Set help as default command
 	rootCmd.cmd.SetVersionTemplate("{{.Name}} {{printf \"%s\" .Version}}\n")
 
 	// Configure cobra behavior
@@ -75,18 +75,11 @@ from WinPower devices, calculates energy consumption, and exports metrics.`,
 	// Add common flags to root command for default behavior
 	rootCmd.addCommonFlags(rootCmd.cmd)
 
-	// If no command is specified, run server command
+	// If no command is specified, run help command
 	rootCmd.cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		// Parse command line flags
-		flagParser := NewFlagParser(cmd)
-		cliArgs, err := flagParser.ParseFlags()
-		if err != nil {
-			return fmt.Errorf("failed to parse command line flags: %w", err)
-		}
-
-		// Execute server command as default
-		serverCommand := NewServerCommand(cliArgs)
-		return serverCommand.Execute(cmd.Context(), args)
+		// Execute help command as default
+		helpCommand := NewHelpCommand(commands)
+		return helpCommand.Execute(cmd.Context(), args)
 	}
 
 	return rootCmd

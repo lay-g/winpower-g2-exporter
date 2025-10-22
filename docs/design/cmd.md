@@ -20,9 +20,9 @@ CMD 模块提供 WinPower G2 Exporter 的命令行入口点，实现基于子命
 exporter [command] [flags]
 
 Commands:
-  server    启动HTTP服务器（默认命令）
+  server    启动HTTP服务器
   version   显示版本信息
-  help      显示帮助信息
+  help      显示帮助信息（默认命令）
 
 Flags:
   --config string        配置文件路径 (default "./config.yaml")

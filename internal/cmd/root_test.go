@@ -181,13 +181,10 @@ func TestRootCommand_Execute_Default(t *testing.T) {
 	rootCmd := NewRootCommand()
 	ctx := context.Background()
 
-	// Test default behavior (should act like server command)
+	// Test default behavior (should act like help command)
 	err := rootCmd.Execute(ctx, []string{"--log-level", "debug"})
 	if err != nil {
-		// We expect this to fail because default command is not yet fully implemented
-		if err.Error() != "default command not yet fully implemented" {
-			t.Errorf("Unexpected error executing default command: %v", err)
-		}
+		t.Errorf("Unexpected error executing default help command: %v", err)
 	}
 }
 

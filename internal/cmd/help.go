@@ -93,6 +93,8 @@ EXAMPLES:
   # Start the server with specific port and log level
   %s server --port 8080 --log-level debug
 
+NOTE: The server command must be explicitly specified to start the HTTP server.
+
   # Show version information
   %s version
 
@@ -195,7 +197,7 @@ func (h *HelpCommand) printServerCommandHelp() {
 	fmt.Printf(`SERVER COMMAND DETAILS:
 
 The server command starts the HTTP server and begins collecting data from WinPower devices.
-This is the default command and will be executed if no subcommand is specified.
+This command must be explicitly specified to start the server.
 
 MODULE INITIALIZATION ORDER:
   1. Storage     - Initializes data storage and file management
