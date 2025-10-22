@@ -259,34 +259,36 @@ func TestCreateWriter(t *testing.T) {
 }
 
 func TestCreateWriterBothOutput(t *testing.T) {
-	tempFile := t.TempDir() + "/test.log"
-	config := &Config{
-		Level:    InfoLevel,
-		Format:   JSONFormat,
-		Output:   BothOutput,
-		Filename: tempFile,
-	}
+	withSilentZap(t, func() {
+		tempFile := t.TempDir() + "/test.log"
+		config := &Config{
+			Level:    InfoLevel,
+			Format:   JSONFormat,
+			Output:   BothOutput,
+			Filename: tempFile,
+		}
 
-	writer, err := CreateWriter(config)
-	if err != nil {
-		t.Fatalf("Expected no error creating both output writer, got %v", err)
-	}
+		writer, err := CreateWriter(config)
+		if err != nil {
+			t.Fatalf("Expected no error creating both output writer, got %v", err)
+		}
 
-	data := []byte("test message\n")
-	_, err = writer.Write(data)
-	if err != nil {
-		t.Errorf("Expected no error writing to both output writer, got %v", err)
-	}
+		data := []byte("test message\n")
+		_, err = writer.Write(data)
+		if err != nil {
+			t.Errorf("Expected no error writing to both output writer, got %v", err)
+		}
 
-	// 验证文件被写入
-	content, err := os.ReadFile(tempFile)
-	if err != nil {
-		t.Errorf("Expected no error reading log file, got %v", err)
-	}
+		// 验证文件被写入
+		content, err := os.ReadFile(tempFile)
+		if err != nil {
+			t.Errorf("Expected no error reading log file, got %v", err)
+		}
 
-	if string(content) != "test message\n" {
-		t.Errorf("Expected file content to be 'test message\\n', got '%s'", string(content))
-	}
+		if string(content) != "test message\n" {
+			t.Errorf("Expected file content to be 'test message\\n', got '%s'", string(content))
+		}
+	})
 }
 
 func TestMultiWriterConcurrency(t *testing.T) {

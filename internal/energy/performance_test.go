@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap/zaptest"
 )
 
 // TestEnergyService_Performance_SingleDevice tests single device calculation performance
@@ -22,7 +21,7 @@ func TestEnergyService_Performance_SingleDevice(t *testing.T) {
 		assert.Less(t, totalDuration, 5*time.Second, "Performance test exceeded 5 second limit")
 	}()
 
-	logger := zaptest.NewLogger(t)
+	logger := newTestLogger(t)
 	storage := NewMockStorage()
 	service := NewEnergyService(storage, logger, DefaultConfig())
 
@@ -65,7 +64,7 @@ func TestEnergyService_Performance_MultipleDevices(t *testing.T) {
 		assert.Less(t, totalDuration, 5*time.Second, "Performance test exceeded 5 second limit")
 	}()
 
-	logger := zaptest.NewLogger(t)
+	logger := newTestLogger(t)
 	storage := NewMockStorage()
 	service := NewEnergyService(storage, logger, DefaultConfig())
 
@@ -126,7 +125,7 @@ func TestEnergyService_Performance_ConcurrentAccess(t *testing.T) {
 		assert.Less(t, totalDuration, 5*time.Second, "Performance test exceeded 5 second limit")
 	}()
 
-	logger := zaptest.NewLogger(t)
+	logger := newTestLogger(t)
 	storage := NewMockStorage()
 	service := NewEnergyService(storage, logger, DefaultConfig())
 
@@ -204,7 +203,7 @@ func TestEnergyService_Performance_GetMethod(t *testing.T) {
 		t.Skip("Skipping performance test in short mode")
 	}
 
-	logger := zaptest.NewLogger(t)
+	logger := newTestLogger(t)
 	storage := NewMockStorage()
 	service := NewEnergyService(storage, logger, DefaultConfig())
 
@@ -244,7 +243,7 @@ func TestEnergyService_Performance_GetMethod(t *testing.T) {
 
 // BenchmarkEnergyService_Calculate benchmarks the Calculate method
 func BenchmarkEnergyService_Calculate(b *testing.B) {
-	logger := zaptest.NewLogger(b)
+	logger := newTestLogger(b)
 	storage := NewMockStorage()
 	service := NewEnergyService(storage, logger, DefaultConfig())
 
@@ -267,7 +266,7 @@ func BenchmarkEnergyService_Calculate(b *testing.B) {
 
 // BenchmarkEnergyService_Get benchmarks the Get method
 func BenchmarkEnergyService_Get(b *testing.B) {
-	logger := zaptest.NewLogger(b)
+	logger := newTestLogger(b)
 	storage := NewMockStorage()
 	service := NewEnergyService(storage, logger, DefaultConfig())
 

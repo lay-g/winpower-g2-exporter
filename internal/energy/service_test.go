@@ -6,13 +6,12 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap/zaptest"
 )
 
 // TestMockStorage implements StorageManager for testing
 type TestMockStorage struct {
-	data    map[string]*PowerData
-	readErr error
+	data     map[string]*PowerData
+	readErr  error
 	writeErr error
 }
 
@@ -45,7 +44,7 @@ func NewTestMockStorage() *TestMockStorage {
 
 // TestNewEnergyService tests the constructor
 func TestNewEnergyService(t *testing.T) {
-	logger := zaptest.NewLogger(t)
+	logger := newTestLogger(t)
 	storage := NewTestMockStorage()
 
 	t.Run("valid inputs", func(t *testing.T) {
@@ -85,7 +84,7 @@ func TestNewEnergyService(t *testing.T) {
 
 // TestEnergyService_Calculate tests the Calculate method
 func TestEnergyService_Calculate(t *testing.T) {
-	logger := zaptest.NewLogger(t)
+	logger := newTestLogger(t)
 
 	t.Run("valid new device", func(t *testing.T) {
 		storage := NewTestMockStorage()
@@ -238,7 +237,7 @@ func TestEnergyService_Calculate(t *testing.T) {
 
 // TestEnergyService_Get tests the Get method
 func TestEnergyService_Get(t *testing.T) {
-	logger := zaptest.NewLogger(t)
+	logger := newTestLogger(t)
 
 	t.Run("existing device", func(t *testing.T) {
 		storage := NewTestMockStorage()
@@ -296,7 +295,7 @@ func TestEnergyService_Get(t *testing.T) {
 
 // TestEnergyService_GetStats tests the GetStats method
 func TestEnergyService_GetStats(t *testing.T) {
-	logger := zaptest.NewLogger(t)
+	logger := newTestLogger(t)
 	storage := NewTestMockStorage()
 
 	t.Run("stats enabled", func(t *testing.T) {
@@ -341,7 +340,7 @@ func TestEnergyService_ConcurrentAccess(t *testing.T) {
 		t.Skip("Skipping concurrent test in short mode")
 	}
 
-	logger := zaptest.NewLogger(t)
+	logger := newTestLogger(t)
 	storage := NewTestMockStorage()
 	service := NewEnergyService(storage, logger, DefaultConfig())
 
