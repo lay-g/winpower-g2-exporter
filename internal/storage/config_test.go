@@ -1,14 +1,16 @@
 package storage
 
 import (
+	"os"
+	"strings"
 	"testing"
 )
 
 func TestNewConfig(t *testing.T) {
-	config := NewConfig()
+	config := NewConfigWithDefaults()
 
 	if config == nil {
-		t.Fatal("NewConfig() returned nil")
+		t.Fatal("NewConfigWithDefaults() returned nil")
 	}
 
 	// Check default values
@@ -212,10 +214,16 @@ func TestConfig_Clone(t *testing.T) {
 		CreateDir:       true,
 	}
 
-	clone := original.Clone()
+	cloned := original.Clone()
 
-	if clone == nil {
+	if cloned == nil {
 		t.Fatal("Clone() returned nil")
+	}
+
+	// Type assert to get back to *Config
+	clone, ok := cloned.(*Config)
+	if !ok {
+		t.Fatal("Clone() did not return *Config type")
 	}
 
 	// Check that values are the same
@@ -257,5 +265,199 @@ func TestConfig_Clone_Nil(t *testing.T) {
 
 	if clone != nil {
 		t.Errorf("Expected Clone() of nil to return nil, got %v", clone)
+	}
+}
+
+func TestConfig_Validate_EmptyDataDir(t *testing.T) {
+	config := &Config{
+		DataDir:         "", // Empty data directory
+		FilePermissions: 0644,
+		DirPermissions:  0755,
+		SyncWrite:       true,
+		CreateDir:       true,
+	}
+
+	err := config.Validate()
+	if err == nil {
+		t.Error("Expected validation error for empty data directory")
+	}
+
+	expectedErr := "storage: data_dir is required"
+	if err.Error() != expectedErr {
+		t.Errorf("Expected error '%s', got '%s'", expectedErr, err.Error())
+	}
+}
+
+func TestConfig_Validate_InvalidPermissions(t *testing.T) {
+	tests := []struct {
+		name          string
+		filePerm      os.FileMode
+		dirPerm       os.FileMode
+		expectedError string
+	}{
+		{
+			name:          "zero file permissions",
+			filePerm:      0,
+			dirPerm:       0755,
+			expectedError: "storage: file_permissions must be specified",
+		},
+		{
+			name:          "zero directory permissions",
+			filePerm:      0644,
+			dirPerm:       0,
+			expectedError: "storage: dir_permissions must be specified",
+		},
+		{
+			name:          "file permissions too permissive",
+			filePerm:      01000, // Beyond 0777
+			dirPerm:       0755,
+			expectedError: "storage: file_permissions too permissive",
+		},
+		{
+			name:          "directory permissions too permissive",
+			filePerm:      0644,
+			dirPerm:       01000, // Beyond 0777
+			expectedError: "storage: dir_permissions too permissive",
+		},
+		{
+			name:          "directory permissions without read access",
+			filePerm:      0644,
+			dirPerm:       0300, // Execute and write but no read
+			expectedError: "storage: dir_permissions must allow read access",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := &Config{
+				DataDir:         "./data",
+				FilePermissions: tt.filePerm,
+				DirPermissions:  tt.dirPerm,
+				SyncWrite:       true,
+				CreateDir:       true,
+			}
+
+			err := config.Validate()
+			if err == nil {
+				t.Errorf("Expected validation error for %s", tt.name)
+			}
+
+			if !strings.Contains(err.Error(), tt.expectedError) {
+				t.Errorf("Expected error containing '%s', got '%s'", tt.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestConfig_String_SensitiveInfo(t *testing.T) {
+	// Storage config doesn't have sensitive info, but test string representation
+	// and ensure it provides useful debugging information
+	config := &Config{
+		DataDir:         "/path/to/data",
+		FilePermissions: 0644,
+		DirPermissions:  0755,
+		SyncWrite:       true,
+		CreateDir:       false,
+	}
+
+	str := config.String()
+
+	// Should contain all configuration values
+	expectedSubstrings := []string{
+		"StorageConfig{",
+		"DataDir: /path/to/data",
+		"FilePermissions: 644",
+		"DirPermissions: 755",
+		"SyncWrite: true",
+		"CreateDir: false",
+		"}",
+	}
+
+	for _, substring := range expectedSubstrings {
+		if !strings.Contains(str, substring) {
+			t.Errorf("String() should contain '%s', got '%s'", substring, str)
+		}
+	}
+
+	// Test with nil config
+	var nilConfig *Config
+	nilStr := nilConfig.String()
+	if nilStr != "<nil>" {
+		t.Errorf("Expected <nil> for nil config string, got '%s'", nilStr)
+	}
+}
+
+func TestConfig_Validate_Enhanced(t *testing.T) {
+	tests := []struct {
+		name        string
+		config      *Config
+		expectedErr bool
+		errMsg      string
+	}{
+		{
+			name: "path too long",
+			config: &Config{
+				DataDir:         strings.Repeat("a", 4097), // Exceeds 4096 character limit
+				FilePermissions: 0644,
+				DirPermissions:  0755,
+			},
+			expectedErr: true,
+			errMsg:      "data_dir path too long",
+		},
+		{
+			name: "path with control characters",
+			config: &Config{
+				DataDir:         "./data\x00\x01", // Contains control characters
+				FilePermissions: 0644,
+				DirPermissions:  0755,
+			},
+			expectedErr: true,
+			errMsg:      "data_dir contains invalid control characters",
+		},
+		{
+			name: "file permissions at max allowed",
+			config: &Config{
+				DataDir:         "./data",
+				FilePermissions: 0777, // Exactly the max allowed
+				DirPermissions:  0755,
+			},
+			expectedErr: false, // Should be valid (exactly at max)
+		},
+		{
+			name: "directory permissions at max allowed",
+			config: &Config{
+				DataDir:         "./data",
+				FilePermissions: 0644,
+				DirPermissions:  0777, // Exactly the max allowed
+			},
+			expectedErr: false, // Should be valid (exactly at max)
+		},
+		{
+			name: "valid config with max permissions",
+			config: &Config{
+				DataDir:         "./data",
+				FilePermissions: 0777,
+				DirPermissions:  0777,
+			},
+			expectedErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.config.Validate()
+			if (err != nil) != tt.expectedErr {
+				t.Errorf("Validate() error = %v, expectedErr %v", err, tt.expectedErr)
+				return
+			}
+
+			if tt.expectedErr && tt.errMsg != "" {
+				if err == nil {
+					t.Errorf("Expected error containing '%s', got nil", tt.errMsg)
+				} else if !strings.Contains(err.Error(), tt.errMsg) {
+					t.Errorf("Expected error containing '%s', got '%s'", tt.errMsg, err.Error())
+				}
+			}
+		})
 	}
 }

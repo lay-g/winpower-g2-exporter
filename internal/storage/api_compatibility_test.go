@@ -54,7 +54,7 @@ func TestAPICompatibility_NewFileReaderWithPath(t *testing.T) {
 
 func TestAPICompatibility_NewFileWriterWithConfig(t *testing.T) {
 	tempDir := t.TempDir()
-	config := NewConfig()
+	config := NewConfigWithDefaults()
 	config.DataDir = tempDir
 	config.SyncWrite = false
 
@@ -76,7 +76,7 @@ func TestAPICompatibility_NewFileWriterWithConfig(t *testing.T) {
 
 func TestAPICompatibility_NewFileReaderWithConfig(t *testing.T) {
 	tempDir := t.TempDir()
-	config := NewConfig()
+	config := NewConfigWithDefaults()
 	config.DataDir = tempDir
 
 	// First write some test data
@@ -139,7 +139,7 @@ func TestAPICompatibility_NewPowerData(t *testing.T) {
 }
 
 func TestAPICompatibility_ConfigValidation(t *testing.T) {
-	config := NewConfig()
+	config := NewConfigWithDefaults()
 
 	// Test that default configuration is valid
 	if err := config.Validate(); err != nil {
@@ -147,7 +147,11 @@ func TestAPICompatibility_ConfigValidation(t *testing.T) {
 	}
 
 	// Test that we can clone a config
-	cloned := config.Clone()
+	clonedInterface := config.Clone()
+	cloned, ok := clonedInterface.(*Config)
+	if !ok {
+		t.Fatal("Clone() did not return *Config type")
+	}
 	// Clone() method should never return nil for valid config
 	if cloned.DataDir != config.DataDir {
 		t.Error("Cloned config should have same DataDir")
@@ -161,7 +165,7 @@ func TestAPICompatibility_ConfigValidation(t *testing.T) {
 }
 
 func TestAPICompatibility_FilePermissions(t *testing.T) {
-	config := NewConfig()
+	config := NewConfigWithDefaults()
 
 	// Test default file permissions
 	if config.FilePermissions == 0 {
@@ -187,7 +191,7 @@ func TestAPICompatibility_InitializeFunctions(t *testing.T) {
 	tempDir := t.TempDir()
 
 	// Test InitializeWithConfig
-	config := NewConfig()
+	config := NewConfigWithDefaults()
 	config.DataDir = tempDir
 
 	manager, err := InitializeWithConfig(config)
@@ -248,7 +252,7 @@ func TestAPICompatibility_ConfigSetDefaults(t *testing.T) {
 	}
 
 	// Test that NewConfig sets boolean defaults
-	newConfig := NewConfig()
+	newConfig := NewConfigWithDefaults()
 	if !newConfig.SyncWrite {
 		t.Error("NewConfig() should set SyncWrite to true")
 	}

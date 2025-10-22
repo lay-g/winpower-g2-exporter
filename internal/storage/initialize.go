@@ -35,7 +35,11 @@ func Initialize(opts *InitializeOptions) (*FileStorageManager, error) {
 	}
 
 	// Clone configuration to avoid modifying the original
-	config := opts.Config.Clone()
+	configCloned := opts.Config.Clone()
+	config, ok := configCloned.(*Config)
+	if !ok {
+		return nil, fmt.Errorf("failed to clone configuration: unexpected type")
+	}
 
 	// Validate configuration
 	if err := config.Validate(); err != nil {

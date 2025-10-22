@@ -72,7 +72,7 @@ func TestStorageManagerWithPath(t *testing.T) {
 }
 
 func TestNewManager(t *testing.T) {
-	config := NewConfig()
+	config := NewConfigWithDefaults()
 	config.DataDir = t.TempDir()
 
 	manager, err := NewManager(config)
@@ -105,7 +105,7 @@ func TestNewManager(t *testing.T) {
 
 func TestFileStorageManager_ListDeviceFiles(t *testing.T) {
 	tempDir := t.TempDir()
-	config := NewConfig()
+	config := NewConfigWithDefaults()
 	config.DataDir = tempDir
 
 	manager, err := NewFileStorageManager(config)
@@ -156,7 +156,7 @@ func TestFileStorageManager_ListDeviceFiles(t *testing.T) {
 
 func TestFileStorageManager_ListDeviceFiles_WithNonDataFiles(t *testing.T) {
 	tempDir := t.TempDir()
-	config := NewConfig()
+	config := NewConfigWithDefaults()
 	config.DataDir = tempDir
 
 	manager, err := NewFileStorageManager(config)
@@ -200,7 +200,7 @@ func TestFileStorageManager_ListDeviceFiles_WithNonDataFiles(t *testing.T) {
 
 func TestFileStorageManager_ListDeviceFiles_EmptyDirectory(t *testing.T) {
 	tempDir := t.TempDir()
-	config := NewConfig()
+	config := NewConfigWithDefaults()
 	config.DataDir = tempDir
 
 	manager, err := NewFileStorageManager(config)
@@ -220,7 +220,7 @@ func TestFileStorageManager_ListDeviceFiles_EmptyDirectory(t *testing.T) {
 }
 
 func TestFileStorageManager_ListDeviceFiles_NonExistentDirectory(t *testing.T) {
-	config := NewConfig()
+	config := NewConfigWithDefaults()
 	config.DataDir = "/non/existent/directory"
 	config.CreateDir = false // Don't create directory
 
@@ -242,7 +242,7 @@ func TestFileStorageManager_ListDeviceFiles_NonExistentDirectory(t *testing.T) {
 }
 
 func TestFileStorageManager_GetConfig(t *testing.T) {
-	config := NewConfig()
+	config := NewConfigWithDefaults()
 	config.DataDir = t.TempDir()
 	config.SyncWrite = false
 	config.FilePermissions = 0600
@@ -284,7 +284,7 @@ func TestFileStorageManager_GetConfig(t *testing.T) {
 
 func TestFileStorageManager_GetDataDir(t *testing.T) {
 	tempDir := t.TempDir()
-	config := NewConfig()
+	config := NewConfigWithDefaults()
 	config.DataDir = tempDir
 
 	manager, err := NewFileStorageManager(config)
@@ -300,7 +300,7 @@ func TestFileStorageManager_GetDataDir(t *testing.T) {
 
 func TestFileStorageManager_GetDeviceFilePath(t *testing.T) {
 	tempDir := t.TempDir()
-	config := NewConfig()
+	config := NewConfigWithDefaults()
 	config.DataDir = tempDir
 
 	manager, err := NewFileStorageManager(config)

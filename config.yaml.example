@@ -1,0 +1,74 @@
+# WinPower G2 Exporter Configuration Example
+# Copy this file to config.yaml and customize for your environment
+#
+# Configuration loading priority (highest to lowest):
+# 1. Command line flags
+# 2. Environment variables (WINPOWER_EXPORTER_* prefix)
+# 3. This YAML configuration file
+# 4. Built-in default values
+#
+# For environment variables, use WINPOWER_EXPORTER_ prefix followed by
+# the module and field name in uppercase, e.g.:
+#   WINPOWER_EXPORTER_WINPOWER_URL="https://winpower.example.com:8443"
+#   WINPOWER_EXPORTER_STORAGE_DATA_DIR="/var/lib/winpower-exporter"
+#   WINPOWER_EXPORTER_SERVER_PORT="9090"
+
+# Storage configuration - where to store data files
+storage:
+  data_dir: "./data"                        # Directory for data storage
+  create_dir: true                         # Create directory if it doesn't exist
+  sync_write: true                         # Synchronous writes for data safety
+  file_permissions: 0644                  # File permissions for data files (octal)
+  dir_permissions: 0755                   # Directory permissions (octal)
+
+# WinPower connection configuration
+winpower:
+  url: "https://winpower.example.com:8443"  # WinPower API URL (REQUIRED)
+  username: "admin"                         # API username (REQUIRED)
+  password: "admin"                         # API password (REQUIRED, CHANGE IN PRODUCTION)
+  timeout: "30s"                            # HTTP request timeout
+  max_retries: 3                           # Maximum retry attempts
+  skip_tls_verify: false                    # Skip TLS verification (for self-signed certs)
+  # Note: For production environments, always use HTTPS and valid certificates
+
+# Energy calculation configuration
+energy:
+  precision: 0.01                           # Calculation precision in watt-hours
+  enable_stats: true                        # Enable statistics collection
+  max_calculation_time: 1000000000          # Max calculation time in nanoseconds (1s)
+  negative_power_allowed: true              # Allow negative power (energy feedback)
+  # Statistics collection provides additional metrics like min/max/avg values
+
+# Scheduler configuration
+scheduler:
+  collection_interval: "5s"                  # Data collection interval (fixed at 5s)
+  graceful_shutdown_timeout: "30s"           # Graceful shutdown timeout
+  # Note: The collection interval is fixed at 5 seconds as per project requirements
+
+# HTTP server configuration
+server:
+  port: 9090                                 # HTTP server port
+  host: "0.0.0.0"                           # Listen on all interfaces
+  mode: "release"                            # Gin mode (debug, release, test)
+  read_timeout: "30s"                        # Read timeout for HTTP requests
+  write_timeout: "30s"                       # Write timeout for HTTP responses
+  idle_timeout: "60s"                        # Idle timeout for connections
+  enable_pprof: false                        # Enable pprof endpoints (debug mode)
+  enable_cors: false                         # Enable CORS headers
+  enable_rate_limit: false                   # Enable rate limiting
+  rate_limit_rps: 100                        # Rate limit requests per second (if enabled)
+  trusted_proxies: []                        # List of trusted proxy IPs
+
+# Logging configuration (optional)
+# logging:
+#   level: "info"                           # Log level (debug, info, warn, error)
+#   format: "json"                          # Log format (json, console)
+#   output: "stdout"                        # Log output (stdout, stderr, file)
+#   file: "/var/log/winpower-exporter.log"  # Log file path (if output is file)
+
+# Advanced configuration (optional)
+# advanced:
+#   metrics_path: "/metrics"                # Prometheus metrics endpoint
+#   health_path: "/health"                  # Health check endpoint
+#   max_concurrent_requests: 1000           # Max concurrent HTTP requests
+#   request_timeout: "60s"                  # Global request timeout

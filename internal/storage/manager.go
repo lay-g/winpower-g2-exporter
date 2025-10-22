@@ -32,8 +32,15 @@ func NewFileStorageManager(config *Config) (*FileStorageManager, error) {
 		}
 	}
 
+	// Clone config to prevent external modifications
+	configClone := config.Clone()
+	clonedConfig, ok := configClone.(*Config)
+	if !ok {
+		return nil, fmt.Errorf("failed to clone configuration: unexpected type")
+	}
+
 	manager := &FileStorageManager{
-		config: config.Clone(), // Create a copy to prevent external modifications
+		config: clonedConfig, // Use the cloned configuration
 		writer: NewFileWriter(config),
 		reader: NewFileReader(config),
 	}
@@ -84,7 +91,13 @@ func (fsm *FileStorageManager) FileExists(deviceID string) bool {
 
 // GetConfig returns a copy of the current configuration.
 func (fsm *FileStorageManager) GetConfig() *Config {
-	return fsm.config.Clone()
+	configClone := fsm.config.Clone()
+	clonedConfig, ok := configClone.(*Config)
+	if !ok {
+		// This should never happen, but return a new config if it does
+		return NewConfigWithDefaults()
+	}
+	return clonedConfig
 }
 
 // GetDataDir returns the data directory path.

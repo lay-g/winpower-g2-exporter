@@ -81,11 +81,11 @@ winpower_devices_connected 2`,
 	//     log.Printf("Server shutdown error: %v", err)
 	// }
 
-	fmt.Printf("Server created successfully with config: %+v\n", config)
+	fmt.Printf("Server created successfully with config: %s\n", config.String())
 	fmt.Printf("Server created successfully\n")
 
 	// Output:
-	// Server created successfully with config: &{Port:9090 Host:0.0.0.0 Mode:release ReadTimeout:30s WriteTimeout:30s IdleTimeout:1m0s EnablePprof:false EnableCORS:false EnableRateLimit:false}
+	// Server created successfully with config: ServerConfig{Port: 9090, Host: 0.0.0.0, Mode: release, ReadTimeout: 30s, WriteTimeout: 30s, IdleTimeout: 1m0s, EnablePprof: false, EnableCORS: false, EnableRateLimit: false}
 	// Server created successfully
 }
 

@@ -7,7 +7,7 @@ import (
 )
 
 func TestNewInitializeOptions(t *testing.T) {
-	config := NewConfig()
+	config := NewConfigWithDefaults()
 	opts := NewInitializeOptions(config)
 
 	if opts == nil {
@@ -30,7 +30,7 @@ func TestNewInitializeOptions(t *testing.T) {
 
 func TestInitialize_WithValidConfig(t *testing.T) {
 	tempDir := t.TempDir()
-	config := NewConfig()
+	config := NewConfigWithDefaults()
 	config.DataDir = tempDir
 
 	opts := NewInitializeOptions(config)
@@ -84,7 +84,7 @@ func TestInitialize_WithInvalidConfig(t *testing.T) {
 
 func TestInitialize_WithNonExistentDirectory(t *testing.T) {
 	tempDir := filepath.Join(t.TempDir(), "nonexistent")
-	config := NewConfig()
+	config := NewConfigWithDefaults()
 	config.DataDir = tempDir
 	config.CreateDir = true
 

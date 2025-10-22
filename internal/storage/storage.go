@@ -3,7 +3,7 @@ package storage
 // DefaultStorageManager creates a storage manager with default configuration.
 // This is the recommended way to create a storage manager for most use cases.
 func DefaultStorageManager() (*FileStorageManager, error) {
-	config := NewConfig()
+	config := NewConfigWithDefaults()
 	return NewFileStorageManager(config)
 }
 

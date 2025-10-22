@@ -42,18 +42,24 @@ func NewMockStorageManager() *MockStorageManager {
 		writeCalls:     make([]WriteCall, 0),
 		readCalls:      make([]ReadCall, 0),
 		autoInitialize: true,
-		config:         NewConfig(),
+		config:         NewConfigWithDefaults(),
 	}
 }
 
 // NewMockStorageManagerWithConfig creates a new mock storage manager with specific config.
 func NewMockStorageManagerWithConfig(config *Config) *MockStorageManager {
+	configClone := config.Clone()
+	clonedConfig, ok := configClone.(*Config)
+	if !ok {
+		// Fall back to a default config if cloning fails
+		clonedConfig = NewConfigWithDefaults()
+	}
 	return &MockStorageManager{
 		data:           make(map[string]*PowerData),
 		writeCalls:     make([]WriteCall, 0),
 		readCalls:      make([]ReadCall, 0),
 		autoInitialize: true,
-		config:         config.Clone(),
+		config:         clonedConfig,
 	}
 }
 
@@ -236,7 +242,13 @@ func (m *MockStorageManager) GetLastReadCall() (*ReadCall, bool) {
 
 // GetConfig returns the mock's configuration.
 func (m *MockStorageManager) GetConfig() *Config {
-	return m.config.Clone()
+	configClone := m.config.Clone()
+	clonedConfig, ok := configClone.(*Config)
+	if !ok {
+		// This should never happen, but return a new config if it does
+		return NewConfigWithDefaults()
+	}
+	return clonedConfig
 }
 
 // GetConfig is a method to satisfy the same interface as FileStorageManager.

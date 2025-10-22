@@ -313,3 +313,136 @@ func TestConfigEdgeCases(t *testing.T) {
 		assert.NoError(t, err, "All optional features should be valid")
 	})
 }
+
+func TestConfig_SetDefaults(t *testing.T) {
+	t.Run("sets default values for empty config", func(t *testing.T) {
+		config := &Config{}
+
+		config.SetDefaults()
+
+		assert.Equal(t, 9090, config.Port, "Default port should be set")
+		assert.Equal(t, "0.0.0.0", config.Host, "Default host should be set")
+		assert.Equal(t, "release", config.Mode, "Default mode should be set")
+		assert.Equal(t, 30*time.Second, config.ReadTimeout, "Default read timeout should be set")
+		assert.Equal(t, 30*time.Second, config.WriteTimeout, "Default write timeout should be set")
+		assert.Equal(t, 60*time.Second, config.IdleTimeout, "Default idle timeout should be set")
+	})
+
+	t.Run("preserves existing non-zero values", func(t *testing.T) {
+		config := &Config{
+			Port:        8080,
+			Host:        "localhost",
+			Mode:        "debug",
+			ReadTimeout: 15 * time.Second,
+		}
+
+		config.SetDefaults()
+
+		assert.Equal(t, 8080, config.Port, "Existing port should be preserved")
+		assert.Equal(t, "localhost", config.Host, "Existing host should be preserved")
+		assert.Equal(t, "debug", config.Mode, "Existing mode should be preserved")
+		assert.Equal(t, 15*time.Second, config.ReadTimeout, "Existing read timeout should be preserved")
+		// Should set defaults for missing fields
+		assert.Equal(t, 30*time.Second, config.WriteTimeout, "Default write timeout should be set")
+		assert.Equal(t, 60*time.Second, config.IdleTimeout, "Default idle timeout should be set")
+	})
+}
+
+func TestConfig_String(t *testing.T) {
+	t.Run("returns string representation", func(t *testing.T) {
+		config := &Config{
+			Port:            8080,
+			Host:            "localhost",
+			Mode:            "debug",
+			ReadTimeout:     15 * time.Second,
+			WriteTimeout:    20 * time.Second,
+			IdleTimeout:     45 * time.Second,
+			EnablePprof:     true,
+			EnableCORS:      false,
+			EnableRateLimit: true,
+		}
+
+		str := config.String()
+
+		assert.Contains(t, str, "ServerConfig{", "String should contain struct name")
+		assert.Contains(t, str, "Port: 8080", "String should contain port")
+		assert.Contains(t, str, "Host: localhost", "String should contain host")
+		assert.Contains(t, str, "Mode: debug", "String should contain mode")
+		assert.Contains(t, str, "ReadTimeout: 15s", "String should contain read timeout")
+		assert.Contains(t, str, "WriteTimeout: 20s", "String should contain write timeout")
+		assert.Contains(t, str, "IdleTimeout: 45s", "String should contain idle timeout")
+		assert.Contains(t, str, "EnablePprof: true", "String should contain pprof flag")
+		assert.Contains(t, str, "EnableCORS: false", "String should contain CORS flag")
+		assert.Contains(t, str, "EnableRateLimit: true", "String should contain rate limit flag")
+		assert.Contains(t, str, "}", "String should end with closing brace")
+	})
+
+	t.Run("handles nil config", func(t *testing.T) {
+		var config *Config
+
+		str := config.String()
+
+		assert.Equal(t, "<nil>", str, "Nil config should return <nil>")
+	})
+}
+
+func TestConfig_Clone(t *testing.T) {
+	t.Run("creates deep copy", func(t *testing.T) {
+		original := &Config{
+			Port:            8080,
+			Host:            "localhost",
+			Mode:            "debug",
+			ReadTimeout:     15 * time.Second,
+			WriteTimeout:    20 * time.Second,
+			IdleTimeout:     45 * time.Second,
+			EnablePprof:     true,
+			EnableCORS:      false,
+			EnableRateLimit: true,
+		}
+
+		clonedInterface := original.Clone()
+		cloned, ok := clonedInterface.(*Config)
+		require.True(t, ok, "Clone should return *Config type")
+
+		// Verify all fields are copied
+		assert.Equal(t, original.Port, cloned.Port, "Port should be copied")
+		assert.Equal(t, original.Host, cloned.Host, "Host should be copied")
+		assert.Equal(t, original.Mode, cloned.Mode, "Mode should be copied")
+		assert.Equal(t, original.ReadTimeout, cloned.ReadTimeout, "Read timeout should be copied")
+		assert.Equal(t, original.WriteTimeout, cloned.WriteTimeout, "Write timeout should be copied")
+		assert.Equal(t, original.IdleTimeout, cloned.IdleTimeout, "Idle timeout should be copied")
+		assert.Equal(t, original.EnablePprof, cloned.EnablePprof, "Pprof flag should be copied")
+		assert.Equal(t, original.EnableCORS, cloned.EnableCORS, "CORS flag should be copied")
+		assert.Equal(t, original.EnableRateLimit, cloned.EnableRateLimit, "Rate limit flag should be copied")
+
+		// Verify they are different objects
+		assert.NotSame(t, original, cloned, "Clone should create a new object")
+	})
+
+	t.Run("modifying clone does not affect original", func(t *testing.T) {
+		original := &Config{
+			Port: 8080,
+			Host: "localhost",
+		}
+
+		clonedInterface := original.Clone()
+		cloned, ok := clonedInterface.(*Config)
+		require.True(t, ok, "Clone should return *Config type")
+
+		cloned.Port = 9090
+		cloned.Host = "0.0.0.0"
+
+		assert.Equal(t, 8080, original.Port, "Original port should not be affected")
+		assert.Equal(t, "localhost", original.Host, "Original host should not be affected")
+		assert.Equal(t, 9090, cloned.Port, "Cloned port should be modified")
+		assert.Equal(t, "0.0.0.0", cloned.Host, "Cloned host should be modified")
+	})
+
+	t.Run("handles nil config", func(t *testing.T) {
+		var original *Config
+
+		cloned := original.Clone()
+
+		assert.Nil(t, cloned, "Clone of nil should return nil")
+	})
+}

@@ -90,12 +90,7 @@ type Loader interface {
     // Validate 验证配置
     Validate(config Config) error
 
-    // Watch 监控配置文件变更
-    Watch(callback func(Config)) error
-
-    // StopWatching 停止监控
-    StopWatching() error
-}
+  }
 ```
 
 ### 2. 错误处理
@@ -143,7 +138,6 @@ type loader struct {
     prefix       string
     viper        *viper.Viper
     configPath   string
-    watchers     map[string]*fsnotify.Watcher
     mu           sync.RWMutex
     cache        map[string]interface{}
     cacheEnabled bool
@@ -157,7 +151,6 @@ func NewLoader(prefix string) Loader {
     return &loader{
         prefix:       prefix,
         viper:        v,
-        watchers:     make(map[string]*fsnotify.Watcher),
         cache:        make(map[string]interface{}),
         cacheEnabled: true,
     }
@@ -236,60 +229,6 @@ func (l *loader) getEnvKey(moduleName string, field reflect.StructField) string 
 }
 ```
 
-### 3. 配置文件监控
-
-```go
-func (l *loader) Watch(callback func(Config)) error {
-    if l.configPath == "" {
-        return fmt.Errorf("no config file path set")
-    }
-
-    watcher, err := fsnotify.NewWatcher()
-    if err != nil {
-        return err
-    }
-
-    if err := watcher.Add(l.configPath); err != nil {
-        watcher.Close()
-        return err
-    }
-
-    l.watchers[l.configPath] = watcher
-
-    go func() {
-        defer watcher.Close()
-        for {
-            select {
-            case event, ok := <-watcher.Events:
-                if !ok {
-                    return
-                }
-                if event.Op&fsnotify.Write == fsnotify.Write {
-                    l.handleConfigChange(callback)
-                }
-            case err, ok := <-watcher.Errors:
-                if !ok {
-                    return
-                }
-                log.Printf("config watcher error: %v", err)
-            }
-        }
-    }()
-
-    return nil
-}
-
-func (l *loader) handleConfigChange(callback func(Config)) {
-    // 清空缓存
-    l.mu.Lock()
-    l.cache = make(map[string]interface{})
-    l.mu.Unlock()
-
-    // 重新加载配置
-    // 这里可以触发回调通知相关模块
-    log.Println("Configuration file changed, reloading...")
-}
-```
 
 ## 模块配置适配
 
@@ -370,25 +309,6 @@ func (c *Config) Clone() Config {
 }
 ```
 
-## 性能优化
-
-### 1. 配置缓存
-
-- 使用内存缓存避免重复文件解析
-- 支持缓存失效和更新
-- 使用读写锁保证并发安全
-
-### 2. 延迟加载
-
-- 只在需要时加载特定模块配置
-- 支持配置预加载以提高响应速度
-- 使用懒加载减少启动时间
-
-### 3. 批量操作
-
-- 支持批量加载多个模块配置
-- 减少文件系统访问次数
-- 提高配置初始化效率
 
 ## 安全考虑
 
@@ -444,10 +364,4 @@ func (c *Config) Clone() Config {
 - 验证模块间配置交互
 - 测试配置文件变更响应
 
-### 3. 性能测试
-
-- 配置加载性能基准测试
-- 并发访问安全性测试
-- 内存使用效率测试
-
-这个设计确保了配置系统的模块化、可扩展性和安全性，同时保持了良好的性能和用户体验。
+这个设计确保了配置系统的模块化、可扩展性和安全性，同时保持了良好的用户体验。

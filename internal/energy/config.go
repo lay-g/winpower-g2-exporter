@@ -3,6 +3,8 @@ package energy
 import (
 	"fmt"
 	"time"
+
+	"github.com/lay-g/winpower-g2-exporter/internal/pkgs/config"
 )
 
 // DefaultConfig returns a default configuration for the energy module.
@@ -13,6 +15,30 @@ func DefaultConfig() *Config {
 		MaxCalculationTime:   1 * time.Second.Nanoseconds(),
 		NegativePowerAllowed: true, // Allow negative power for energy feedback
 	}
+}
+
+// NewConfig creates a new energy configuration using the provided loader.
+func NewConfig(loader *config.Loader) (*Config, error) {
+	cfg := DefaultConfig()
+	cfg.SetDefaults()
+
+	if err := loader.LoadModule("energy", cfg); err != nil {
+		return nil, fmt.Errorf("failed to load energy config: %w", err)
+	}
+
+	return cfg, cfg.Validate()
+}
+
+// SetDefaults sets the default values for the energy configuration.
+func (c *Config) SetDefaults() {
+	if c.Precision == 0 {
+		c.Precision = 0.01 // Default 0.01 Wh precision
+	}
+	if c.MaxCalculationTime == 0 {
+		c.MaxCalculationTime = 1 * time.Second.Nanoseconds()
+	}
+	// Note: Boolean defaults are set in DefaultConfig function
+	// to avoid conflicts with configuration loading
 }
 
 // Validate checks if the configuration parameters are valid.
@@ -56,7 +82,7 @@ func (c *Config) String() string {
 }
 
 // Clone creates a deep copy of the configuration.
-func (c *Config) Clone() *Config {
+func (c *Config) Clone() config.Config {
 	if c == nil {
 		return nil
 	}

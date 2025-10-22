@@ -122,21 +122,6 @@ The system SHALL validate configuration dependencies between modules.
 - **AND** 应该验证server端口未被占用
 - **AND** 如果依赖不满足应该返回详细错误信息
 
-### Requirement: 配置热重载支持
-The system SHALL support hot reload for non-critical configuration changes.
-
-#### Scenario: 热重载非关键配置
-- **GIVEN** 应用程序正在运行
-- **WHEN** 修改日志级别等非关键配置时
-- **THEN** 应该能够热重载配置
-- **AND** 不应该重启应用程序
-- **AND** 应该记录配置变更日志
-
-#### Scenario: 限制关键配置热重载
-- **GIVEN** 应用程序正在运行
-- **WHEN** 尝试修改端口等关键配置时
-- **THEN** 应该拒绝热重载
-- **AND** 应该返回需要重启的错误信息
 
 ### Requirement: 配置向后兼容性
 The system SHALL maintain backward compatibility with existing configuration formats.

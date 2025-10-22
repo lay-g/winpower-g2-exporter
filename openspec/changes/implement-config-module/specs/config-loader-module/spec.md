@@ -96,7 +96,7 @@ The system SHALL provide structured error handling for configuration operations.
 - **AND** 错误应该包含错误代码和详细描述
 
 ### Requirement: 配置缓存功能
-The system SHALL provide configuration caching to improve performance for repeated access.
+The system SHALL provide configuration caching for repeated access.
 
 #### Scenario: 缓存已加载的配置
 - **GIVEN** 成功加载了一个模块的配置
@@ -110,14 +110,6 @@ The system SHALL provide configuration caching to improve performance for repeat
 - **THEN** 应该重新加载配置
 - **AND** 缓存应该被更新
 
-### Requirement: 配置监控功能
-The system SHALL support configuration file monitoring for hot reload capabilities.
-
-#### Scenario: 监控配置文件变更
-- **GIVEN** 启用了配置文件监控
-- **WHEN** 配置文件被修改时
-- **THEN** 应该触发重新加载事件
-- **AND** 相关模块应该收到通知
 
 ### Requirement: 多环境配置支持
 The system SHALL support multiple environment configurations.

@@ -3,6 +3,8 @@ package server
 import (
 	"fmt"
 	"time"
+
+	"github.com/lay-g/winpower-g2-exporter/internal/pkgs/config"
 )
 
 // Config defines comprehensive configuration for the HTTP server.
@@ -46,7 +48,7 @@ type Config struct {
 	//   - Avoid using privileged ports (< 1024) unless necessary
 	//   - Use different ports for different environments
 	//   - Ensure firewall rules allow the chosen port
-	Port int `yaml:"port" json:"port"`
+	Port int `yaml:"port" json:"port" env:"SERVER_PORT"`
 
 	// Host defines the network interface for the HTTP server to bind to.
 	//
@@ -61,7 +63,7 @@ type Config struct {
 	//   - Use "127.0.0.1" in development to limit access
 	//   - Use "0.0.0.0" in production behind a load balancer
 	//   - Avoid binding to specific IPs in cloud environments
-	Host string `yaml:"host" json:"host"`
+	Host string `yaml:"host" json:"host" env:"SERVER_HOST"`
 
 	// Mode defines the Gin framework runtime mode.
 	//
@@ -77,7 +79,7 @@ type Config struct {
 	//   - Use "debug" during development and troubleshooting
 	//   - Use "release" in production environments
 	//   - Use "test" for automated testing
-	Mode string `yaml:"mode" json:"mode"`
+	Mode string `yaml:"mode" json:"mode" env:"SERVER_MODE"`
 
 	// ReadTimeout defines the maximum duration for reading the entire request.
 	//
@@ -92,7 +94,7 @@ type Config struct {
 	//   - Smaller values improve protection against attacks
 	//   - Should be longer than expected request processing time
 	//   - Set to 0 for no timeout (not recommended)
-	ReadTimeout time.Duration `yaml:"read_timeout" json:"read_timeout"`
+	ReadTimeout time.Duration `yaml:"read_timeout" json:"read_timeout" env:"SERVER_READ_TIMEOUT"`
 
 	// WriteTimeout defines the maximum duration for writing the response.
 	//
@@ -107,7 +109,7 @@ type Config struct {
 	//   - Larger values support large response payloads
 	//   - Smaller values prevent connection hijacking
 	//   - Set to 0 for no timeout (not recommended)
-	WriteTimeout time.Duration `yaml:"write_timeout" json:"write_timeout"`
+	WriteTimeout time.Duration `yaml:"write_timeout" json:"write_timeout" env:"SERVER_WRITE_TIMEOUT"`
 
 	// IdleTimeout defines the maximum time to wait for the next request.
 	//
@@ -122,7 +124,7 @@ type Config struct {
 	//   - Frees up server resources
 	//   - Encourages efficient connection reuse
 	//   - Balances performance and resource usage
-	IdleTimeout time.Duration `yaml:"idle_timeout" json:"idle_timeout"`
+	IdleTimeout time.Duration `yaml:"idle_timeout" json:"idle_timeout" env:"SERVER_IDLE_TIMEOUT"`
 
 	// EnablePprof enables Go's built-in pprof profiling endpoints.
 	//
@@ -143,7 +145,7 @@ type Config struct {
 	//   - Can be used for performance analysis attacks
 	//   - Should be behind authentication in production
 	//   - Consider enabling only temporarily for debugging
-	EnablePprof bool `yaml:"enable_pprof" json:"enable_pprof"`
+	EnablePprof bool `yaml:"enable_pprof" json:"enable_pprof" env:"SERVER_ENABLE_PPROF"`
 
 	// EnableCORS enables Cross-Origin Resource Sharing middleware.
 	//
@@ -168,7 +170,7 @@ type Config struct {
 	//   - Can expose the API to any website
 	//   - Should be configured with specific origins in production
 	//   - Consider authentication alternatives for sensitive data
-	EnableCORS bool `yaml:"enable_cors" json:"enable_cors"`
+	EnableCORS bool `yaml:"enable_cors" json:"enable_cors" env:"SERVER_ENABLE_CORS"`
 
 	// EnableRateLimit enables request rate limiting middleware.
 	//
@@ -194,7 +196,7 @@ type Config struct {
 	//   - Rate limits are currently hardcoded
 	//   - Future versions may support configurable limits
 	//   - Consider using reverse proxy rate limiting for production
-	EnableRateLimit bool `yaml:"enable_rate_limit" json:"enable_rate_limit"`
+	EnableRateLimit bool `yaml:"enable_rate_limit" json:"enable_rate_limit" env:"SERVER_ENABLE_RATE_LIMIT"`
 }
 
 // DefaultConfig returns a server configuration with production-ready defaults.
@@ -238,6 +240,41 @@ func DefaultConfig() *Config {
 		EnableCORS:      false,
 		EnableRateLimit: false,
 	}
+}
+
+// NewConfig creates a new server configuration using the provided loader.
+func NewConfig(loader *config.Loader) (*Config, error) {
+	cfg := &Config{}
+	cfg.SetDefaults()
+
+	if err := loader.LoadModule("server", cfg); err != nil {
+		return nil, fmt.Errorf("failed to load server config: %w", err)
+	}
+
+	return cfg, cfg.Validate()
+}
+
+// SetDefaults sets the default values for the server configuration.
+func (c *Config) SetDefaults() {
+	if c.Port == 0 {
+		c.Port = 9090
+	}
+	if c.Host == "" {
+		c.Host = "0.0.0.0"
+	}
+	if c.Mode == "" {
+		c.Mode = "release"
+	}
+	if c.ReadTimeout == 0 {
+		c.ReadTimeout = 30 * time.Second
+	}
+	if c.WriteTimeout == 0 {
+		c.WriteTimeout = 30 * time.Second
+	}
+	if c.IdleTimeout == 0 {
+		c.IdleTimeout = 60 * time.Second
+	}
+	// EnablePprof, EnableCORS, EnableRateLimit default to false
 }
 
 // Validate checks the configuration for validity and returns detailed errors.
@@ -311,4 +348,44 @@ func (c *Config) Validate() error {
 	}
 
 	return nil
+}
+
+// String returns a string representation of the configuration.
+// Sensitive data is masked for security.
+func (c *Config) String() string {
+	if c == nil {
+		return "<nil>"
+	}
+
+	return fmt.Sprintf(
+		"ServerConfig{Port: %d, Host: %s, Mode: %s, ReadTimeout: %s, WriteTimeout: %s, IdleTimeout: %s, EnablePprof: %t, EnableCORS: %t, EnableRateLimit: %t}",
+		c.Port,
+		c.Host,
+		c.Mode,
+		c.ReadTimeout.String(),
+		c.WriteTimeout.String(),
+		c.IdleTimeout.String(),
+		c.EnablePprof,
+		c.EnableCORS,
+		c.EnableRateLimit,
+	)
+}
+
+// Clone creates a deep copy of the configuration.
+func (c *Config) Clone() config.Config {
+	if c == nil {
+		return nil
+	}
+
+	return &Config{
+		Port:            c.Port,
+		Host:            c.Host,
+		Mode:            c.Mode,
+		ReadTimeout:     c.ReadTimeout,
+		WriteTimeout:    c.WriteTimeout,
+		IdleTimeout:     c.IdleTimeout,
+		EnablePprof:     c.EnablePprof,
+		EnableCORS:      c.EnableCORS,
+		EnableRateLimit: c.EnableRateLimit,
+	}
 }

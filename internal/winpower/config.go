@@ -6,6 +6,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/lay-g/winpower-g2-exporter/internal/pkgs/config"
 )
 
 // Config represents the configuration for the WinPower module.
@@ -13,14 +15,14 @@ import (
 // with a WinPower G2 system instance.
 type Config struct {
 	// Connection settings
-	URL           string        `yaml:"url" json:"url"`                         // Base URL of the WinPower API (e.g., "https://winpower.example.com:8080")
-	SkipTLSVerify bool          `yaml:"skip_tls_verify" json:"skip_tls_verify"` // Skip TLS certificate verification for self-signed certificates
-	Timeout       time.Duration `yaml:"timeout" json:"timeout"`                 // HTTP request timeout (recommended: 30s)
-	MaxRetries    int           `yaml:"max_retries" json:"max_retries"`         // Maximum retry attempts for failed requests (recommended: 3)
+	URL           string        `yaml:"url" json:"url" env:"WINPOWER_URL"`                                     // Base URL of the WinPower API (e.g., "https://winpower.example.com:8080")
+	SkipTLSVerify bool          `yaml:"skip_tls_verify" json:"skip_tls_verify" env:"WINPOWER_SKIP_TLS_VERIFY"` // Skip TLS certificate verification for self-signed certificates
+	Timeout       time.Duration `yaml:"timeout" json:"timeout" env:"WINPOWER_TIMEOUT"`                         // HTTP request timeout (recommended: 30s)
+	MaxRetries    int           `yaml:"max_retries" json:"max_retries" env:"WINPOWER_MAX_RETRIES"`             // Maximum retry attempts for failed requests (recommended: 3)
 
 	// Authentication settings
-	Username string `yaml:"username" json:"username"` // Username for API authentication
-	Password string `yaml:"password" json:"password"` // Password for API authentication
+	Username string `yaml:"username" json:"username" env:"WINPOWER_USERNAME"` // Username for API authentication
+	Password string `yaml:"password" json:"password" env:"WINPOWER_PASSWORD"` // Password for API authentication
 }
 
 // DefaultConfig returns a default configuration for the WinPower module.
@@ -38,6 +40,44 @@ func DefaultConfig() *Config {
 		Username: "admin", // Default admin user
 		Password: "admin", // Default admin password - CHANGE IN PRODUCTION
 	}
+}
+
+// SetDefaults sets the default values for the configuration.
+func (c *Config) SetDefaults() {
+	if c.URL == "" {
+		c.URL = "https://localhost:8080"
+	}
+	if c.Timeout == 0 {
+		c.Timeout = 30 * time.Second
+	}
+	if c.MaxRetries == 0 {
+		c.MaxRetries = 3
+	}
+	if c.Username == "" {
+		c.Username = "admin"
+	}
+	if c.Password == "" {
+		c.Password = "admin"
+	}
+	// Note: SkipTLSVerify defaults to false (zero value)
+}
+
+// NewConfig creates a new WinPower configuration using the config loader.
+// This function loads configuration from YAML files and environment variables.
+func NewConfig(loader *config.Loader) (*Config, error) {
+	cfg := &Config{}
+	cfg.SetDefaults()
+
+	if err := loader.LoadModule("winpower", cfg); err != nil {
+		return nil, fmt.Errorf("failed to load winpower config: %w", err)
+	}
+
+	// Validate the loaded configuration
+	if err := cfg.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid winpower config: %w", err)
+	}
+
+	return cfg, nil
 }
 
 // String returns a string representation of the configuration.
@@ -61,7 +101,7 @@ func (c *Config) String() string {
 }
 
 // Clone creates a deep copy of the configuration.
-func (c *Config) Clone() *Config {
+func (c *Config) Clone() config.Config {
 	if c == nil {
 		return nil
 	}

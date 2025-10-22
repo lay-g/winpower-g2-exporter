@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/lay-g/winpower-g2-exporter/internal/pkgs/config"
 )
 
 var (
@@ -18,11 +20,11 @@ var (
 type Config struct {
 	// CollectionInterval specifies the interval between data collection cycles
 	// Default: 5 seconds
-	CollectionInterval time.Duration `json:"collection_interval" yaml:"collection_interval" default:"5s"`
+	CollectionInterval time.Duration `json:"collection_interval" yaml:"collection_interval" env:"SCHEDULER_COLLECTION_INTERVAL" default:"5s"`
 
 	// GracefulShutdownTimeout specifies the timeout for graceful shutdown
 	// Default: 30 seconds
-	GracefulShutdownTimeout time.Duration `json:"graceful_shutdown_timeout" yaml:"graceful_shutdown_timeout" default:"30s"`
+	GracefulShutdownTimeout time.Duration `json:"graceful_shutdown_timeout" yaml:"graceful_shutdown_timeout" env:"SCHEDULER_GRACEFUL_SHUTDOWN_TIMEOUT" default:"30s"`
 }
 
 // DefaultConfig returns a default configuration for the scheduler module
@@ -33,8 +35,34 @@ func DefaultConfig() *Config {
 	}
 }
 
+// NewConfig creates a new scheduler configuration using the provided loader.
+func NewConfig(loader *config.Loader) (*Config, error) {
+	cfg := &Config{}
+	cfg.SetDefaults()
+
+	if err := loader.LoadModule("scheduler", cfg); err != nil {
+		return nil, fmt.Errorf("failed to load scheduler config: %w", err)
+	}
+
+	return cfg, cfg.Validate()
+}
+
+// SetDefaults sets the default values for the scheduler configuration.
+func (c *Config) SetDefaults() {
+	if c.CollectionInterval == 0 {
+		c.CollectionInterval = 5 * time.Second
+	}
+	if c.GracefulShutdownTimeout == 0 {
+		c.GracefulShutdownTimeout = 30 * time.Second
+	}
+}
+
 // Validate validates the configuration and returns an error if invalid
 func (c *Config) Validate() error {
+	if c == nil {
+		return fmt.Errorf("scheduler config cannot be nil")
+	}
+
 	if c.CollectionInterval <= 0 {
 		return fmt.Errorf("%w: %v", ErrInvalidCollectionInterval, c.CollectionInterval)
 	}
@@ -75,5 +103,31 @@ func GetModuleConfig() *SchedulerModuleConfig {
 func SetModuleConfig(config *SchedulerModuleConfig) {
 	if config != nil {
 		moduleConfig = config
+	}
+}
+
+// String returns a string representation of the configuration.
+// Sensitive data is masked for security.
+func (c *Config) String() string {
+	if c == nil {
+		return "<nil>"
+	}
+
+	return fmt.Sprintf(
+		"SchedulerConfig{CollectionInterval: %s, GracefulShutdownTimeout: %s}",
+		c.CollectionInterval.String(),
+		c.GracefulShutdownTimeout.String(),
+	)
+}
+
+// Clone creates a deep copy of the configuration.
+func (c *Config) Clone() config.Config {
+	if c == nil {
+		return nil
+	}
+
+	return &Config{
+		CollectionInterval:      c.CollectionInterval,
+		GracefulShutdownTimeout: c.GracefulShutdownTimeout,
 	}
 }

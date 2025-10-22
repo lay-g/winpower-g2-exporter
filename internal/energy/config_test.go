@@ -107,7 +107,7 @@ func TestConfig_Clone(t *testing.T) {
 		NegativePowerAllowed: true,
 	}
 
-	cloned := original.Clone()
+	cloned := original.Clone().(*Config)
 
 	assert.Equal(t, original.Precision, cloned.Precision)
 	assert.Equal(t, original.EnableStats, cloned.EnableStats)

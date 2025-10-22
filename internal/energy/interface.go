@@ -58,19 +58,19 @@ func (pd *PowerData) IsZero() bool {
 type Config struct {
 	// Precision specifies the calculation precision for energy values in watt-hours.
 	// Default: 0.01 Wh
-	Precision float64 `yaml:"precision" default:"0.01"`
+	Precision float64 `yaml:"precision" json:"precision" env:"ENERGY_PRECISION" default:"0.01"`
 
 	// EnableStats indicates whether to collect calculation statistics.
 	// Default: true
-	EnableStats bool `yaml:"enable_stats" default:"true"`
+	EnableStats bool `yaml:"enable_stats" json:"enable_stats" env:"ENERGY_ENABLE_STATS" default:"true"`
 
 	// MaxCalculationTime specifies the maximum allowed time for a single calculation.
 	// Default: 1 second
-	MaxCalculationTime int64 `yaml:"max_calculation_time" default:"1000000000"` // in nanoseconds
+	MaxCalculationTime int64 `yaml:"max_calculation_time" json:"max_calculation_time" env:"ENERGY_MAX_CALCULATION_TIME" default:"1000000000"` // in nanoseconds
 
 	// NegativePowerAllowed indicates whether negative power values are accepted.
 	// Default: true (to support energy feedback scenarios)
-	NegativePowerAllowed bool `yaml:"negative_power_allowed" default:"true"`
+	NegativePowerAllowed bool `yaml:"negative_power_allowed" json:"negative_power_allowed" env:"ENERGY_NEGATIVE_POWER_ALLOWED" default:"true"`
 }
 
 // SimpleStats tracks basic calculation statistics.

@@ -166,7 +166,13 @@ func (c *HTTPClient) GetConfig() *Config {
 	if c == nil || c.config == nil {
 		return nil
 	}
-	return c.config.Clone()
+	configClone := c.config.Clone()
+	clonedConfig, ok := configClone.(*Config)
+	if !ok {
+		// This should never happen, but return a new config if it does
+		return DefaultConfig()
+	}
+	return clonedConfig
 }
 
 // GetTimeout returns the configured timeout.

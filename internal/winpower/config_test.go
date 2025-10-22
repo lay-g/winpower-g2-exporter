@@ -207,7 +207,11 @@ func TestConfig_Clone(t *testing.T) {
 					MaxRetries:    3,
 					SkipTLSVerify: true,
 				}
-				cloned := original.Clone()
+				clonedInterface := original.Clone()
+				cloned, ok := clonedInterface.(*Config)
+				if !ok {
+					t.Fatal("Clone() did not return *Config type")
+				}
 
 				if cloned == original {
 					t.Error("Clone() should create a new instance")
@@ -246,7 +250,11 @@ func TestConfig_Clone(t *testing.T) {
 					Username: "testuser",
 					Password: "testpass",
 				}
-				cloned := original.Clone()
+				clonedInterface := original.Clone()
+				cloned, ok := clonedInterface.(*Config)
+				if !ok {
+					t.Fatal("Clone() did not return *Config type")
+				}
 				cloned.URL = "https://modified.com"
 
 				if original.URL == cloned.URL {
@@ -910,5 +918,253 @@ func TestConfig_ValidationCachePerformance(t *testing.T) {
 	if secondPassDuration > firstPassDuration*2 {
 		t.Logf("Warning: Cache may not be improving performance significantly. First pass: %v, Second pass: %v",
 			firstPassDuration, secondPassDuration)
+	}
+}
+
+// TestConfig_Validate_URL tests URL validation in detail
+func TestConfig_Validate_URL(t *testing.T) {
+	tests := []struct {
+		name        string
+		url         string
+		expectedErr bool
+		errMsg      string
+	}{
+		{
+			name:        "empty URL",
+			url:         "",
+			expectedErr: true,
+			errMsg:      "cannot be empty",
+		},
+		{
+			name:        "valid HTTPS URL",
+			url:         "https://example.com",
+			expectedErr: false,
+		},
+		{
+			name:        "valid HTTP URL",
+			url:         "http://example.com",
+			expectedErr: false,
+		},
+		{
+			name:        "valid HTTPS URL with port",
+			url:         "https://example.com:8080",
+			expectedErr: false,
+		},
+		{
+			name:        "valid localhost HTTPS",
+			url:         "https://localhost:8080",
+			expectedErr: false,
+		},
+		{
+			name:        "valid IP address",
+			url:         "https://192.168.1.100:8080",
+			expectedErr: false,
+		},
+		{
+			name:        "invalid scheme - FTP",
+			url:         "ftp://example.com",
+			expectedErr: true,
+			errMsg:      "must start with http:// or https://",
+		},
+		{
+			name:        "invalid scheme - no protocol",
+			url:         "example.com",
+			expectedErr: true,
+			errMsg:      "must start with http:// or https://",
+		},
+		{
+			name:        "malformed URL",
+			url:         "https://",
+			expectedErr: true,
+			errMsg:      "hostname cannot be empty",
+		},
+		{
+			name:        "URL with spaces",
+			url:         "https://example .com",
+			expectedErr: true,
+			errMsg:      "invalid URL format",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := &Config{
+				URL:        tt.url,
+				Username:   "testuser",
+				Password:   "testpass",
+				Timeout:    30 * time.Second,
+				MaxRetries: 3,
+			}
+
+			err := config.Validate()
+			if (err != nil) != tt.expectedErr {
+				t.Errorf("Validate() error = %v, expectedErr %v", err, tt.expectedErr)
+				return
+			}
+
+			if tt.expectedErr && tt.errMsg != "" {
+				if err == nil {
+					t.Errorf("Expected error containing '%s', got nil", tt.errMsg)
+				} else if !strings.Contains(strings.ToLower(err.Error()), strings.ToLower(tt.errMsg)) {
+					t.Errorf("Expected error containing '%s', got '%s'", tt.errMsg, err.Error())
+				}
+			}
+		})
+	}
+}
+
+// TestConfig_Validate_Credentials tests credential validation
+func TestConfig_Validate_Credentials(t *testing.T) {
+	tests := []struct {
+		name        string
+		username    string
+		password    string
+		expectedErr bool
+		errMsg      string
+	}{
+		{
+			name:        "valid credentials",
+			username:    "testuser",
+			password:    "testpass",
+			expectedErr: false,
+		},
+		{
+			name:        "empty username",
+			username:    "",
+			password:    "testpass",
+			expectedErr: true,
+			errMsg:      "username cannot be empty",
+		},
+		{
+			name:        "empty password",
+			username:    "testuser",
+			password:    "",
+			expectedErr: true,
+			errMsg:      "password cannot be empty",
+		},
+		{
+			name:        "both empty",
+			username:    "",
+			password:    "",
+			expectedErr: true,
+			errMsg:      "username cannot be empty",
+		},
+		{
+			name:        "username with invalid special characters",
+			username:    "test\tuser", // Tab character
+			password:    "testpass",
+			expectedErr: true,
+			errMsg:      "invalid characters",
+		},
+		{
+			name:        "username with spaces",
+			username:    "test user",
+			password:    "testpass",
+			expectedErr: true,
+			errMsg:      "invalid characters",
+		},
+		{
+			name:        "username with colon",
+			username:    "test:user",
+			password:    "testpass",
+			expectedErr: true,
+			errMsg:      "invalid characters",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := &Config{
+				URL:        "https://example.com",
+				Username:   tt.username,
+				Password:   tt.password,
+				Timeout:    30 * time.Second,
+				MaxRetries: 3,
+			}
+
+			err := config.Validate()
+			if (err != nil) != tt.expectedErr {
+				t.Errorf("Validate() error = %v, expectedErr %v", err, tt.expectedErr)
+				return
+			}
+
+			if tt.expectedErr && tt.errMsg != "" {
+				if err == nil {
+					t.Errorf("Expected error containing '%s', got nil", tt.errMsg)
+				} else if !strings.Contains(strings.ToLower(err.Error()), strings.ToLower(tt.errMsg)) {
+					t.Errorf("Expected error containing '%s', got '%s'", tt.errMsg, err.Error())
+				}
+			}
+		})
+	}
+}
+
+// TestConfig_String_MaskPassword tests password masking in String method
+func TestConfig_String_MaskPassword(t *testing.T) {
+	tests := []struct {
+		name     string
+		password string
+		expected string
+	}{
+		{
+			name:     "short password",
+			password: "ab",
+			expected: "**",
+		},
+		{
+			name:     "medium password",
+			password: "password123",
+			expected: "p***3",
+		},
+		{
+			name:     "long password",
+			password: "verylongpassword",
+			expected: "v***d",
+		},
+		{
+			name:     "empty password",
+			password: "",
+			expected: "<empty>",
+		},
+		{
+			name:     "single character password",
+			password: "a",
+			expected: "*",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := &Config{
+				URL:        "https://example.com",
+				Username:   "testuser",
+				Password:   tt.password,
+				Timeout:    30 * time.Second,
+				MaxRetries: 3,
+			}
+
+			str := config.String()
+
+			// Password should be masked (check that the raw password is not in the string)
+			// For single character passwords, the masked version is the same as the original,
+			// so we need to be more careful
+			if len(tt.password) > 1 && strings.Contains(str, tt.password) {
+				t.Errorf("String() should mask password '%s', but it's visible in: %s", tt.password, str)
+			}
+
+			// Should contain the masked version
+			if !strings.Contains(str, tt.expected) {
+				t.Errorf("String() should contain masked password '%s', got: %s", tt.expected, str)
+			}
+
+			// Username and URL should be visible
+			if !strings.Contains(str, "testuser") {
+				t.Errorf("String() should contain username, got: %s", str)
+			}
+
+			if !strings.Contains(str, "example.com") {
+				t.Errorf("String() should contain URL, got: %s", str)
+			}
+		})
 	}
 }

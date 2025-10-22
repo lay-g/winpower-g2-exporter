@@ -59,23 +59,6 @@ The system SHALL test the complete integration of the configuration system.
 - **AND** 应该测试配置冲突的处理
 - **AND** 应该测试配置缺失的错误处理
 
-### Requirement: 性能测试策略
-The system SHALL validate configuration system performance.
-
-#### Scenario: 配置加载性能测试
-- **GIVEN** 需要测试配置加载性能
-- **WHEN** 编写性能测试时
-- **THEN** 应该测试大配置文件的加载时间
-- **AND** 应该测试配置缓存的有效性
-- **AND** 应该测试多次加载的性能一致性
-- **AND** 应该设置合理的性能基准
-
-#### Scenario: 内存使用测试
-- **GIVEN** 需要测试配置系统内存使用
-- **WHEN** 编写内存测试时
-- **THEN** 应该测试配置缓存的内存占用
-- **AND** 应该测试配置对象的生命周期
-- **AND** 应该测试内存泄漏检测
 
 ### Requirement: 边界测试策略
 The system SHALL test various boundary conditions.
@@ -178,4 +161,3 @@ The system SHALL prevent functional regression.
 - **THEN** 应该运行所有现有测试用例
 - **AND** 应该验证原有功能未受影响
 - **AND** 应该测试配置向后兼容性
-- **AND** 应该确保性能没有显著下降
