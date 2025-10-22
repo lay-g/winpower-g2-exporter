@@ -206,7 +206,7 @@ func (m *ConfigMerger) MergeLogging(base, overlay *LoggingConfig) *LoggingConfig
 	result.MaxSize = m.mergeInt(base.MaxSize, overlay.MaxSize)
 	result.MaxAge = m.mergeInt(base.MaxAge, overlay.MaxAge)
 	result.MaxBackups = m.mergeInt(base.MaxBackups, overlay.MaxBackups)
-	result.Compress = m.mergeBool(base.Compress, overlay.Compress)
+	result.Compress = m.mergeBoolPtr(base.Compress, overlay.Compress)
 
 	return &result
 }
@@ -220,7 +220,7 @@ func (m *ConfigMerger) MergeStorage(base, overlay *StorageConfig) *StorageConfig
 	result := *base
 
 	result.DataDir = m.mergeString(base.DataDir, overlay.DataDir)
-	result.SyncWrite = m.mergeBool(base.SyncWrite, overlay.SyncWrite)
+	result.SyncWrite = m.mergeBoolPtr(base.SyncWrite, overlay.SyncWrite)
 
 	return &result
 }
@@ -233,7 +233,7 @@ func (m *ConfigMerger) MergeCollector(base, overlay *CollectorConfig) *Collector
 
 	result := *base
 
-	result.Enabled = m.mergeBool(base.Enabled, overlay.Enabled)
+	result.Enabled = m.mergeBoolPtr(base.Enabled, overlay.Enabled)
 	result.Interval = m.mergeDuration(base.Interval, overlay.Interval)
 	result.Timeout = m.mergeDuration(base.Timeout, overlay.Timeout)
 	result.MaxConcurrent = m.mergeInt(base.MaxConcurrent, overlay.MaxConcurrent)
@@ -249,7 +249,7 @@ func (m *ConfigMerger) MergeMetrics(base, overlay *MetricsConfig) *MetricsConfig
 
 	result := *base
 
-	result.Enabled = m.mergeBool(base.Enabled, overlay.Enabled)
+	result.Enabled = m.mergeBoolPtr(base.Enabled, overlay.Enabled)
 	result.Path = m.mergeString(base.Path, overlay.Path)
 	result.Namespace = m.mergeString(base.Namespace, overlay.Namespace)
 	result.Subsystem = m.mergeString(base.Subsystem, overlay.Subsystem)
@@ -266,7 +266,7 @@ func (m *ConfigMerger) MergeEnergy(base, overlay *EnergyConfig) *EnergyConfig {
 
 	result := *base
 
-	result.Enabled = m.mergeBool(base.Enabled, overlay.Enabled)
+	result.Enabled = m.mergeBoolPtr(base.Enabled, overlay.Enabled)
 	result.Interval = m.mergeDuration(base.Interval, overlay.Interval)
 	result.Precision = m.mergeInt(base.Precision, overlay.Precision)
 	result.StoragePeriod = m.mergeDuration(base.StoragePeriod, overlay.StoragePeriod)
@@ -282,7 +282,7 @@ func (m *ConfigMerger) MergeScheduler(base, overlay *SchedulerConfig) *Scheduler
 
 	result := *base
 
-	result.Enabled = m.mergeBool(base.Enabled, overlay.Enabled)
+	result.Enabled = m.mergeBoolPtr(base.Enabled, overlay.Enabled)
 	result.Interval = m.mergeDuration(base.Interval, overlay.Interval)
 
 	return &result
@@ -326,6 +326,15 @@ func (m *ConfigMerger) mergeInt(base, overlay int) int {
 // mergeBool 合并布尔字段，总是使用 overlay 的值（因为布尔值有明确的默认值）
 func (m *ConfigMerger) mergeBool(base, overlay bool) bool {
 	return overlay
+}
+
+// mergeBoolPtr 合并 *bool 字段，overlay 为 nil 时使用 base 的值
+// 这允许我们区分"未设置"（nil）和"设置为 false"
+func (m *ConfigMerger) mergeBoolPtr(base, overlay *bool) *bool {
+	if overlay != nil {
+		return overlay
+	}
+	return base
 }
 
 // mergeDuration 合并时间间隔字段，如果 overlay 不为零值则使用 overlay 的值

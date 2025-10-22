@@ -25,7 +25,7 @@ func TestStarter_RegisterModule(t *testing.T) {
 		logger := log.NewTestLogger()
 	starter := NewStarter(logger)
 
-	module := &testMockModuleInitializer{name: "test-module"}
+	module := &mockModuleInitializer{name: "test-module"}
 
 	starter.RegisterModule(module)
 
@@ -40,8 +40,11 @@ func TestStarter_InitializeModule_Success(t *testing.T) {
 		logger := log.NewTestLogger()
 	starter := NewStarter(logger)
 
-	module := &testMockModuleInitializer{name: "test-module"}
+	module := &mockModuleInitializer{name: "test-module"}
 	ctx := context.Background()
+
+	// Register the module first to initialize status
+	starter.RegisterModule(module)
 
 	err := starter.initializeModule(ctx, module)
 
@@ -56,11 +59,14 @@ func TestStarter_InitializeModule_InitError(t *testing.T) {
 	starter := NewStarter(logger)
 
 	initError := assert.AnError
-	module := &testMockModuleInitializer{
+	module := &mockModuleInitializer{
 		name:      "test-module",
 		initError: initError,
 	}
 	ctx := context.Background()
+
+	// Register the module first to initialize status
+	starter.RegisterModule(module)
 
 	err := starter.initializeModule(ctx, module)
 
@@ -77,11 +83,14 @@ func TestStarter_InitializeModule_StartError(t *testing.T) {
 	starter := NewStarter(logger)
 
 	startError := assert.AnError
-	module := &testMockModuleInitializer{
+	module := &mockModuleInitializer{
 		name:       "test-module",
 		startError: startError,
 	}
 	ctx := context.Background()
+
+	// Register the module first to initialize status
+	starter.RegisterModule(module)
 
 	err := starter.initializeModule(ctx, module)
 
@@ -97,9 +106,9 @@ func TestStarter_StopModules_Success(t *testing.T) {
 		logger := log.NewTestLogger()
 	starter := NewStarter(logger)
 
-	// Register and start modules
-	module1 := &testMockModuleInitializer{name: "module1"}
-	module2 := &testMockModuleInitializer{name: "module2"}
+	// Register and start modules with names that are in the stop order
+	module1 := &mockModuleInitializer{name: "server"}
+	module2 := &mockModuleInitializer{name: "scheduler"}
 
 	starter.RegisterModule(module1)
 	starter.RegisterModule(module2)
@@ -107,8 +116,8 @@ func TestStarter_StopModules_Success(t *testing.T) {
 	// Mark modules as started
 	module1.started = true
 	module2.started = true
-	starter.status["module1"].Status = "running"
-	starter.status["module2"].Status = "running"
+	starter.status["server"].Status = "running"
+	starter.status["scheduler"].Status = "running"
 
 	ctx := context.Background()
 
@@ -117,18 +126,18 @@ func TestStarter_StopModules_Success(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, module1.started)
 	assert.False(t, module2.started)
-	assert.Equal(t, "stopped", starter.status["module1"].Status)
-	assert.Equal(t, "stopped", starter.status["module2"].Status)
+	assert.Equal(t, "stopped", starter.status["server"].Status)
+	assert.Equal(t, "stopped", starter.status["scheduler"].Status)
 }
 
 func TestStarter_StopModules_StopError(t *testing.T) {
 		logger := log.NewTestLogger()
 	starter := NewStarter(logger)
 
-	// Register modules
-	module1 := &testMockModuleInitializer{name: "module1"}
-	module2 := &testMockModuleInitializer{
-		name:      "module2",
+	// Register modules with names that are in the stop order
+	module1 := &mockModuleInitializer{name: "server"}
+	module2 := &mockModuleInitializer{
+		name:      "scheduler",
 		stopError: assert.AnError,
 	}
 
@@ -138,8 +147,8 @@ func TestStarter_StopModules_StopError(t *testing.T) {
 	// Mark modules as started
 	module1.started = true
 	module2.started = true
-	starter.status["module1"].Status = "running"
-	starter.status["module2"].Status = "running"
+	starter.status["server"].Status = "running"
+	starter.status["scheduler"].Status = "running"
 
 	ctx := context.Background()
 
@@ -148,15 +157,16 @@ func TestStarter_StopModules_StopError(t *testing.T) {
 	// Should not return error even if some modules fail to stop
 	require.NoError(t, err)
 	assert.False(t, module1.started)
-	assert.False(t, module2.started)
+	// module2 should still be started because its stop method failed
+	assert.True(t, module2.started)
 }
 
 func TestStarter_PerformHealthCheck_Success(t *testing.T) {
 		logger := log.NewTestLogger()
 	starter := NewStarter(logger)
 
-	module1 := &testMockModuleInitializer{name: "module1"}
-	module2 := &testMockModuleInitializer{name: "module2"}
+	module1 := &mockModuleInitializer{name: "module1"}
+	module2 := &mockModuleInitializer{name: "module2"}
 
 	starter.RegisterModule(module1)
 	starter.RegisterModule(module2)
@@ -178,7 +188,7 @@ func TestStarter_PerformHealthCheck_HealthCheckError(t *testing.T) {
 		logger := log.NewTestLogger()
 	starter := NewStarter(logger)
 
-	module1 := &testMockModuleInitializer{name: "module1"}
+	module1 := &mockModuleInitializer{name: "module1"}
 	module2 := &testMockModuleInitializer{
 		name:        "module2",
 		healthError: assert.AnError,
@@ -205,7 +215,7 @@ func TestStarter_GetModuleStatus(t *testing.T) {
 		logger := log.NewTestLogger()
 	starter := NewStarter(logger)
 
-	module := &testMockModuleInitializer{name: "test-module"}
+	module := &mockModuleInitializer{name: "test-module"}
 	starter.RegisterModule(module)
 
 	status := starter.GetModuleStatus()
@@ -219,8 +229,8 @@ func TestStarter_GetStartupMetrics(t *testing.T) {
 		logger := log.NewTestLogger()
 	starter := NewStarter(logger)
 
-	module1 := &testMockModuleInitializer{name: "module1"}
-	module2 := &testMockModuleInitializer{name: "module2"}
+	module1 := &mockModuleInitializer{name: "module1"}
+	module2 := &mockModuleInitializer{name: "module2"}
 
 	starter.RegisterModule(module1)
 	starter.RegisterModule(module2)
@@ -243,8 +253,8 @@ func TestStarter_GetInitializedModules(t *testing.T) {
 		logger := log.NewTestLogger()
 	starter := NewStarter(logger)
 
-	module1 := &testMockModuleInitializer{name: "module1"}
-	module2 := &testMockModuleInitializer{name: "module2"}
+	module1 := &mockModuleInitializer{name: "module1"}
+	module2 := &mockModuleInitializer{name: "module2"}
 
 	starter.RegisterModule(module1)
 	starter.RegisterModule(module2)
@@ -264,9 +274,9 @@ func TestStarter_GetRunningModules(t *testing.T) {
 		logger := log.NewTestLogger()
 	starter := NewStarter(logger)
 
-	module1 := &testMockModuleInitializer{name: "module1"}
-	module2 := &testMockModuleInitializer{name: "module2"}
-	module3 := &testMockModuleInitializer{name: "module3"}
+	module1 := &mockModuleInitializer{name: "module1"}
+	module2 := &mockModuleInitializer{name: "module2"}
+	module3 := &mockModuleInitializer{name: "module3"}
 
 	starter.RegisterModule(module1)
 	starter.RegisterModule(module2)

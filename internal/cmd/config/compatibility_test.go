@@ -68,33 +68,33 @@ func TestConfigModuleCompatibility(t *testing.T) {
 				MaxSize:    100,
 				MaxAge:     7,
 				MaxBackups: 3,
-				Compress:   true,
+				Compress:   BoolPtr(true),
 			},
 			Storage: StorageConfig{
 				DataDir:   "/tmp/data",
-				SyncWrite: true,
+				SyncWrite: BoolPtr(true),
 			},
 			Collector: CollectorConfig{
-				Enabled:       true,
+				Enabled:       BoolPtr(true),
 				Interval:      5 * time.Second,
 				Timeout:       3 * time.Second,
 				MaxConcurrent: 5,
 			},
 			Metrics: MetricsConfig{
-				Enabled:   true,
+				Enabled:   BoolPtr(true),
 				Path:      "/metrics",
 				Namespace: "winpower",
 				Subsystem: "exporter",
 				HelpText:  "WinPower G2 Exporter Metrics",
 			},
 			Energy: EnergyConfig{
-				Enabled:       true,
+				Enabled:       BoolPtr(true),
 				Interval:      5 * time.Second,
 				Precision:     3,
 				StoragePeriod: 1 * time.Hour,
 			},
 			Scheduler: SchedulerConfig{
-				Enabled:  true,
+				Enabled:  BoolPtr(true),
 				Interval: 5 * time.Second,
 			},
 			Auth: AuthConfig{
@@ -342,7 +342,7 @@ auth:
 				MaxSize:    100,
 				MaxAge:     7,
 				MaxBackups: 3,
-				Compress:   true,
+				Compress:   BoolPtr(true),
 			},
 			WinPower: WinPowerConfig{
 				Timeout:       30 * time.Second,
@@ -352,7 +352,7 @@ auth:
 			},
 			Storage: StorageConfig{
 				DataDir:   "./data",
-				SyncWrite: true,
+				SyncWrite: BoolPtr(true),
 			},
 		}
 

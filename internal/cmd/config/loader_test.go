@@ -33,14 +33,17 @@ func TestLoader_LoadFromDefaults(t *testing.T) {
 
 	// 验证默认存储配置
 	assert.Equal(t, "./data", config.Storage.DataDir, "Default data directory should be ./data")
-	assert.Equal(t, true, config.Storage.SyncWrite, "Default sync write should be true")
+	assert.NotNil(t, config.Storage.SyncWrite, "Default sync write should not be nil")
+	assert.Equal(t, true, *config.Storage.SyncWrite, "Default sync write should be true")
 
 	// 验证默认采集器配置
-	assert.Equal(t, true, config.Collector.Enabled, "Collector should be enabled by default")
+	assert.NotNil(t, config.Collector.Enabled, "Collector enabled should not be nil")
+	assert.Equal(t, true, *config.Collector.Enabled, "Collector should be enabled by default")
 	assert.Equal(t, 5*time.Second, config.Collector.Interval, "Default collector interval should be 5s")
 
 	// 验证默认指标配置
-	assert.Equal(t, true, config.Metrics.Enabled, "Metrics should be enabled by default")
+	assert.NotNil(t, config.Metrics.Enabled, "Metrics enabled should not be nil")
+	assert.Equal(t, true, *config.Metrics.Enabled, "Metrics should be enabled by default")
 	assert.Equal(t, "/metrics", config.Metrics.Path, "Default metrics path should be /metrics")
 	assert.Equal(t, "winpower", config.Metrics.Namespace, "Default metrics namespace should be winpower")
 }
@@ -109,13 +112,13 @@ func TestLoader_LoadWithEnvVars(t *testing.T) {
 
 	// 设置环境变量
 	envVars := map[string]string{
-		"WINPOWER_EXPORTER_SERVER_PORT":      "9000",
-		"WINPOWER_EXPORTER_LOGGING_LEVEL":    "warn",
-		"WINPOWER_EXPORTER_DATA_DIR":         "/custom/data",
-		"WINPOWER_EXPORTER_CONSOLE_URL":      "http://env.example.com",
-		"WINPOWER_EXPORTER_USERNAME":         "envuser",
-		"WINPOWER_EXPORTER_PASSWORD":         "envpass",
-		"WINPOWER_EXPORTER_SKIP_SSL_VERIFY":  "true",
+		"WINPOWER_EXPORTER_SERVER_PORT":     "9000",
+		"WINPOWER_EXPORTER_LOGGING_LEVEL":   "warn",
+		"WINPOWER_EXPORTER_DATA_DIR":        "/custom/data",
+		"WINPOWER_EXPORTER_CONSOLE_URL":     "http://env.example.com",
+		"WINPOWER_EXPORTER_USERNAME":        "envuser",
+		"WINPOWER_EXPORTER_PASSWORD":        "envpass",
+		"WINPOWER_EXPORTER_SKIP_SSL_VERIFY": "true",
 	}
 
 	// 保存原始环境变量并设置测试环境变量
@@ -230,9 +233,9 @@ winpower:
 
 	// 设置环境变量
 	envVars := map[string]string{
-		"WINPOWER_EXPORTER_SERVER_PORT":  "9000",
+		"WINPOWER_EXPORTER_SERVER_PORT":   "9000",
 		"WINPOWER_EXPORTER_LOGGING_LEVEL": "warn",
-		"WINPOWER_EXPORTER_DATA_DIR":     "/env/data",
+		"WINPOWER_EXPORTER_DATA_DIR":      "/env/data",
 	}
 
 	// 保存原始环境变量并设置测试环境变量

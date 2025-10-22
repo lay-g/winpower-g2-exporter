@@ -125,9 +125,9 @@ func TestConfigMerger_MergeWithDefaults(t *testing.T) {
 	t.Run("merge with defaults", func(t *testing.T) {
 		defaults := &Config{
 			Server: ServerConfig{
-				Port:        8080,
-				Host:        "localhost",
-				ReadTimeout: 30 * time.Second,
+				Port:         8080,
+				Host:         "localhost",
+				ReadTimeout:  30 * time.Second,
 				WriteTimeout: 30 * time.Second,
 			},
 			Logging: LoggingConfig{
@@ -193,12 +193,12 @@ func TestConfigMerger_MergeServer(t *testing.T) {
 
 	t.Run("normal merge", func(t *testing.T) {
 		base := &ServerConfig{
-			Port:        8080,
-			Host:        "localhost",
-			ReadTimeout: 30 * time.Second,
+			Port:         8080,
+			Host:         "localhost",
+			ReadTimeout:  30 * time.Second,
 			WriteTimeout: 30 * time.Second,
 			IdleTimeout:  60 * time.Second,
-			EnablePprof: false,
+			EnablePprof:  false,
 		}
 
 		overlay := &ServerConfig{
@@ -255,9 +255,9 @@ func TestConfigMerger_MergeWinPower(t *testing.T) {
 	}
 
 	overlay := &WinPowerConfig{
-		URL:          "http://overlay.example.com",
-		Username:     "overlayuser",
-		MaxRetries:   5,
+		URL:           "http://overlay.example.com",
+		Username:      "overlayuser",
+		MaxRetries:    5,
 		SkipSSLVerify: true,
 	}
 
@@ -284,14 +284,14 @@ func TestConfigMerger_MergeLogging(t *testing.T) {
 		MaxSize:    100,
 		MaxAge:     7,
 		MaxBackups: 3,
-		Compress:   true,
+		Compress:   BoolPtr(true),
 	}
 
 	overlay := &LoggingConfig{
-		Level:      "debug",
-		Output:     "file",
-		MaxSize:    200,
-		Compress:   false,
+		Level:    "debug",
+		Output:   "file",
+		MaxSize:  200,
+		Compress: BoolPtr(false),
 	}
 
 	result := merger.MergeLogging(base, overlay)
@@ -312,12 +312,12 @@ func TestConfigMerger_MergeStorage(t *testing.T) {
 
 	base := &StorageConfig{
 		DataDir:   "/data",
-		SyncWrite: true,
+		SyncWrite: BoolPtr(true),
 	}
 
 	overlay := &StorageConfig{
 		DataDir:   "/new/data",
-		SyncWrite: false,
+		SyncWrite: BoolPtr(false),
 	}
 
 	result := merger.MergeStorage(base, overlay)
@@ -331,14 +331,14 @@ func TestConfigMerger_MergeCollector(t *testing.T) {
 	merger := NewMerger(logger)
 
 	base := &CollectorConfig{
-		Enabled:       true,
+		Enabled:       BoolPtr(true),
 		Interval:      5 * time.Second,
 		Timeout:       3 * time.Second,
 		MaxConcurrent: 5,
 	}
 
 	overlay := &CollectorConfig{
-		Enabled:  false,
+		Enabled:  BoolPtr(false),
 		Interval: 10 * time.Second,
 		Timeout:  6 * time.Second,
 	}
@@ -356,7 +356,7 @@ func TestConfigMerger_MergeMetrics(t *testing.T) {
 	merger := NewMerger(logger)
 
 	base := &MetricsConfig{
-		Enabled:   true,
+		Enabled:   BoolPtr(true),
 		Path:      "/metrics",
 		Namespace: "winpower",
 		Subsystem: "exporter",
@@ -364,7 +364,7 @@ func TestConfigMerger_MergeMetrics(t *testing.T) {
 	}
 
 	overlay := &MetricsConfig{
-		Enabled:   false,
+		Enabled:   BoolPtr(false),
 		Path:      "/newmetrics",
 		Namespace: "custom",
 		HelpText:  "Custom Metrics",
@@ -384,14 +384,14 @@ func TestConfigMerger_MergeEnergy(t *testing.T) {
 	merger := NewMerger(logger)
 
 	base := &EnergyConfig{
-		Enabled:       true,
+		Enabled:       BoolPtr(true),
 		Interval:      5 * time.Second,
 		Precision:     3,
 		StoragePeriod: 1 * time.Hour,
 	}
 
 	overlay := &EnergyConfig{
-		Enabled:   false,
+		Enabled:   BoolPtr(false),
 		Interval:  10 * time.Second,
 		Precision: 5,
 	}
@@ -409,12 +409,12 @@ func TestConfigMerger_MergeScheduler(t *testing.T) {
 	merger := NewMerger(logger)
 
 	base := &SchedulerConfig{
-		Enabled:  true,
+		Enabled:  BoolPtr(true),
 		Interval: 5 * time.Second,
 	}
 
 	overlay := &SchedulerConfig{
-		Enabled:  false,
+		Enabled:  BoolPtr(false),
 		Interval: 10 * time.Second,
 	}
 
@@ -589,8 +589,8 @@ func TestConfigMerger_isZeroValue(t *testing.T) {
 	})
 
 	t.Run("duration", func(t *testing.T) {
-		assert.True(t, merger.isZeroValue(reflect.ValueOf(0 * time.Second)), "Zero duration should be zero value")
-		assert.False(t, merger.isZeroValue(reflect.ValueOf(10 * time.Second)), "Non-zero duration should not be zero value")
+		assert.True(t, merger.isZeroValue(reflect.ValueOf(0*time.Second)), "Zero duration should be zero value")
+		assert.False(t, merger.isZeroValue(reflect.ValueOf(10*time.Second)), "Non-zero duration should not be zero value")
 	})
 
 	t.Run("pointer", func(t *testing.T) {
@@ -640,8 +640,8 @@ func TestConfigMerger_DeepMerge(t *testing.T) {
 
 		overlay := &Config{
 			Server: ServerConfig{
-				Port:     9090,
-				Host:     "0.0.0.0",
+				Port:        9090,
+				Host:        "0.0.0.0",
 				EnablePprof: true,
 			},
 			Logging: LoggingConfig{
@@ -694,12 +694,12 @@ func TestConfigMerger_Integration(t *testing.T) {
 	// 测试完整的配置合并流程
 	defaults := &Config{
 		Server: ServerConfig{
-			Port:        8080,
-			Host:        "localhost",
-			ReadTimeout: 30 * time.Second,
+			Port:         8080,
+			Host:         "localhost",
+			ReadTimeout:  30 * time.Second,
 			WriteTimeout: 30 * time.Second,
 			IdleTimeout:  60 * time.Second,
-			EnablePprof: false,
+			EnablePprof:  false,
 		},
 		Logging: LoggingConfig{
 			Level:      "info",
@@ -708,7 +708,7 @@ func TestConfigMerger_Integration(t *testing.T) {
 			MaxSize:    100,
 			MaxAge:     7,
 			MaxBackups: 3,
-			Compress:   true,
+			Compress:   BoolPtr(true),
 		},
 		WinPower: WinPowerConfig{
 			Timeout:       30 * time.Second,
@@ -718,35 +718,35 @@ func TestConfigMerger_Integration(t *testing.T) {
 		},
 		Storage: StorageConfig{
 			DataDir:   "./data",
-			SyncWrite: true,
+			SyncWrite: BoolPtr(true),
 		},
 		Collector: CollectorConfig{
-			Enabled:       true,
+			Enabled:       BoolPtr(true),
 			Interval:      5 * time.Second,
 			Timeout:       3 * time.Second,
 			MaxConcurrent: 5,
 		},
 		Metrics: MetricsConfig{
-			Enabled:   true,
+			Enabled:   BoolPtr(true),
 			Path:      "/metrics",
 			Namespace: "winpower",
 			Subsystem: "exporter",
 			HelpText:  "WinPower G2 Exporter Metrics",
 		},
 		Energy: EnergyConfig{
-			Enabled:       true,
+			Enabled:       BoolPtr(true),
 			Interval:      5 * time.Second,
 			Precision:     3,
 			StoragePeriod: 1 * time.Hour,
 		},
 		Scheduler: SchedulerConfig{
-			Enabled:  true,
+			Enabled:  BoolPtr(true),
 			Interval: 5 * time.Second,
 		},
 		Auth: AuthConfig{
-			Enabled: false,
-			Method:  "token",
-			Timeout: 30 * time.Second,
+			Enabled:  false,
+			Method:   "token",
+			Timeout:  30 * time.Second,
 			CacheTTL: 1 * time.Hour,
 		},
 	}

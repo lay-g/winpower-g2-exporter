@@ -42,10 +42,10 @@ type HealthChecker interface {
 
 // SystemHealthCheck represents system-level health information
 type SystemHealthCheck struct {
-	Uptime        time.Duration `json:"uptime"`
-	MemoryUsage   MemoryStats   `json:"memory_usage"`
-	GoroutineCount int          `json:"goroutine_count"`
-	GCStats       GCStats       `json:"gc_stats"`
+	Uptime         time.Duration `json:"uptime"`
+	MemoryUsage    MemoryStats   `json:"memory_usage"`
+	GoroutineCount int           `json:"goroutine_count"`
+	GCStats        GCStats       `json:"gc_stats"`
 }
 
 // MemoryStats represents memory usage statistics
@@ -58,25 +58,25 @@ type MemoryStats struct {
 
 // GCStats represents garbage collection statistics
 type GCStats struct {
-	NumGC        uint32        `json:"num_gc"`
-	NumForcedGC  uint32        `json:"num_forced_gc"`
-	GCCPUFraction float64      `json:"gc_cpu_fraction"`
-	LastGC       time.Time     `json:"last_gc"`
-	NextGC       uint64        `json:"next_gc"`
-	PauseTotalNs uint64        `json:"pause_total_ns"`
-	PauseNs      []uint64      `json:"pause_ns"`
+	NumGC         uint32    `json:"num_gc"`
+	NumForcedGC   uint32    `json:"num_forced_gc"`
+	GCCPUFraction float64   `json:"gc_cpu_fraction"`
+	LastGC        time.Time `json:"last_gc"`
+	NextGC        uint64    `json:"next_gc"`
+	PauseTotalNs  uint64    `json:"pause_total_ns"`
+	PauseNs       []uint64  `json:"pause_ns"`
 }
 
 // HealthManager manages health checks for all application components
 type HealthManager struct {
-	checkers      map[string]HealthChecker
-	results       map[string]*HealthCheckResult
-	logger        log.Logger
-	mutex         sync.RWMutex
-	checkInterval time.Duration
-	timeout       time.Duration
+	checkers        map[string]HealthChecker
+	results         map[string]*HealthCheckResult
+	logger          log.Logger
+	mutex           sync.RWMutex
+	checkInterval   time.Duration
+	timeout         time.Duration
 	lastSystemCheck time.Time
-	systemHealth  *SystemHealthCheck
+	systemHealth    *SystemHealthCheck
 }
 
 // NewHealthManager creates a new health manager
@@ -234,7 +234,7 @@ func (hm *HealthManager) PerformSystemHealthCheck(ctx context.Context) error {
 	copy(gcStats.PauseNs, m.PauseNs[:pauseCount])
 
 	systemHealth := &SystemHealthCheck{
-		Uptime:         time.Since(hm.lastSystemCheck),
+		Uptime: time.Since(hm.lastSystemCheck),
 		MemoryUsage: MemoryStats{
 			Alloc:      m.Alloc,
 			TotalAlloc: m.TotalAlloc,
@@ -362,7 +362,7 @@ func (hm *HealthManager) ClearResults() {
 		hm.results[name] = &HealthCheckResult{
 			Component: name,
 			Status:    HealthStatusUnknown,
-			Message:   "Results cleared",
+			Message:   "Not checked yet",
 			LastCheck: time.Time{},
 		}
 	}
@@ -372,13 +372,13 @@ func (hm *HealthManager) ClearResults() {
 
 // HealthSummary provides a summary of the overall health status
 type HealthSummary struct {
-	OverallStatus     HealthStatus                      `json:"overall_status"`
-	TotalComponents   int                               `json:"total_components"`
-	HealthyComponents int                               `json:"healthy_components"`
-	UnhealthyComponents []string                        `json:"unhealthy_components"`
-	LastCheck         time.Time                         `json:"last_check"`
-	SystemHealth      *SystemHealthCheck                `json:"system_health,omitempty"`
-	ComponentResults  map[string]*HealthCheckResult     `json:"component_results"`
+	OverallStatus       HealthStatus                  `json:"overall_status"`
+	TotalComponents     int                           `json:"total_components"`
+	HealthyComponents   int                           `json:"healthy_components"`
+	UnhealthyComponents []string                      `json:"unhealthy_components"`
+	LastCheck           time.Time                     `json:"last_check"`
+	SystemHealth        *SystemHealthCheck            `json:"system_health,omitempty"`
+	ComponentResults    map[string]*HealthCheckResult `json:"component_results"`
 }
 
 // GetHealthSummary returns a comprehensive health summary
@@ -387,8 +387,8 @@ func (hm *HealthManager) GetHealthSummary() *HealthSummary {
 	defer hm.mutex.RUnlock()
 
 	summary := &HealthSummary{
-		TotalComponents:   len(hm.results),
-		ComponentResults:  make(map[string]*HealthCheckResult),
+		TotalComponents:  len(hm.results),
+		ComponentResults: make(map[string]*HealthCheckResult),
 	}
 
 	// Determine overall status and count healthy components
@@ -402,7 +402,8 @@ func (hm *HealthManager) GetHealthSummary() *HealthSummary {
 
 		if result.Status == HealthStatusHealthy {
 			healthyCount++
-		} else if result.Status != HealthStatusUnknown {
+		} else {
+			// Any non-healthy status (including Unknown and Unhealthy) is considered unhealthy
 			summary.UnhealthyComponents = append(summary.UnhealthyComponents, name)
 		}
 

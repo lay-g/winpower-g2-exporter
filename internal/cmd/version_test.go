@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"runtime"
 	"testing"
 	"time"
 
@@ -101,7 +102,7 @@ func TestVersionCommand_GetVersionInfo(t *testing.T) {
 	assert.NotNil(t, info)
 	assert.Equal(t, Version, info.Version)
 	assert.Equal(t, GitCommit, info.GitCommit)
-	assert.Equal(t, "go1.22", info.GoVersion) // Default Go version format
+	assert.Equal(t, runtime.Version(), info.GoVersion) // Use actual runtime Go version
 	assert.Contains(t, info.Platform, "/")
 }
 
@@ -136,9 +137,9 @@ func TestVersionCommand_FormatBuildTime(t *testing.T) {
 	cmd := NewVersionCommand()
 
 	t.Run("valid build time", func(t *testing.T) {
-		buildTime := time.Date(2024, 1, 15, 10, 30, 0, 0, time.UTC)
+		buildTime := time.Date(2024, 1, 15, 10, 30, 5, 0, time.UTC)
 		result := cmd.formatBuildTime(buildTime)
-		assert.Equal(t, "2024-01-15 10:30:05 UTC", result) // Note: there might be a slight time difference
+		assert.Equal(t, "2024-01-15 10:30:05 UTC", result)
 	})
 
 	t.Run("zero build time", func(t *testing.T) {

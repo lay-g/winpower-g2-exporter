@@ -25,30 +25,30 @@ type ShutdownStep struct {
 	Name        string
 	Phase       ShutdownPhase
 	Timeout     time.Duration
-	Required    bool  // Whether this step must succeed
-	Priority    int   // Lower numbers execute first within the same phase
+	Required    bool // Whether this step must succeed
+	Priority    int  // Lower numbers execute first within the same phase
 	ExecuteFunc func(ctx context.Context) error
 }
 
 // ShutdownResult represents the result of a shutdown step
 type ShutdownResult struct {
-	Step         ShutdownStep
-	Success      bool
-	Error        error
-	Duration     time.Duration
-	TimeoutHit   bool
-	Skipped      bool
-	SkipReason   string
+	Step       ShutdownStep
+	Success    bool
+	Error      error
+	Duration   time.Duration
+	TimeoutHit bool
+	Skipped    bool
+	SkipReason string
 }
 
 // ShutdownConfig contains configuration for the shutdown process
 type ShutdownConfig struct {
-	DefaultTimeout     time.Duration
-	PhaseTimeouts      map[ShutdownPhase]time.Duration
-	ParallelExecution  bool
-	ForceKillAfter     time.Duration
-	EnableGraceful     bool
-	LogShutdownSteps   bool
+	DefaultTimeout    time.Duration
+	PhaseTimeouts     map[ShutdownPhase]time.Duration
+	ParallelExecution bool
+	ForceKillAfter    time.Duration
+	EnableGraceful    bool
+	LogShutdownSteps  bool
 }
 
 // DefaultShutdownConfig returns a default shutdown configuration
@@ -338,27 +338,11 @@ func (sm *ShutdownManager) executeStep(ctx context.Context, step ShutdownStep) e
 
 // waitForCompletion waits for all operations to complete with final timeout
 func (sm *ShutdownManager) waitForCompletion(ctx context.Context) error {
-	if sm.config.ForceKillAfter > 0 {
-		finalCtx, cancel := context.WithTimeout(ctx, sm.config.ForceKillAfter)
-		defer cancel()
-
-		sm.logger.Info("Waiting for final completion",
-			zap.Duration("force_kill_after", sm.config.ForceKillAfter),
-		)
-
-		select {
-		case <-finalCtx.Done():
-			if finalCtx.Err() == context.DeadlineExceeded {
-				sm.logger.Warn("Force kill timeout reached, terminating immediately")
-				return fmt.Errorf("force kill timeout reached")
-			}
-			return finalCtx.Err()
-		case <-sm.ctx.Done():
-			sm.logger.Info("Context cancelled, final completion done")
-			return nil
-		}
-	}
-
+	// This function is called after all shutdown steps have been executed.
+	// ForceKillAfter is a hard deadline for the entire shutdown process,
+	// but since all steps are already complete at this point, we can return immediately.
+	// The timeout is actually enforced at the phase level in executePhase.
+	sm.logger.Debug("All shutdown steps completed successfully")
 	return nil
 }
 

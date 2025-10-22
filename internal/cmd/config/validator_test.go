@@ -38,33 +38,33 @@ func TestConfigValidator_Validate(t *testing.T) {
 				MaxSize:    100,
 				MaxAge:     7,
 				MaxBackups: 3,
-				Compress:   true,
+				Compress:   BoolPtr(true),
 			},
 			Storage: StorageConfig{
 				DataDir:   t.TempDir(),
-				SyncWrite: true,
+				SyncWrite: BoolPtr(true),
 			},
 			Collector: CollectorConfig{
-				Enabled:       true,
+				Enabled:       BoolPtr(true),
 				Interval:      5 * time.Second,
 				Timeout:       3 * time.Second,
 				MaxConcurrent: 5,
 			},
 			Metrics: MetricsConfig{
-				Enabled:   true,
+				Enabled:   BoolPtr(true),
 				Path:      "/metrics",
 				Namespace: "winpower",
 				Subsystem: "exporter",
 				HelpText:  "Test metrics",
 			},
 			Energy: EnergyConfig{
-				Enabled:       true,
+				Enabled:       BoolPtr(true),
 				Interval:      5 * time.Second,
 				Precision:     3,
 				StoragePeriod: 1 * time.Hour,
 			},
 			Scheduler: SchedulerConfig{
-				Enabled:  true,
+				Enabled:  BoolPtr(true),
 				Interval: 5 * time.Second,
 			},
 			Auth: AuthConfig{
@@ -304,7 +304,7 @@ func TestConfigValidator_ValidateLogging(t *testing.T) {
 			MaxSize:    100,
 			MaxAge:     7,
 			MaxBackups: 3,
-			Compress:   true,
+			Compress:   BoolPtr(true),
 		}
 
 		err := validator.ValidateLogging(config)
@@ -319,7 +319,7 @@ func TestConfigValidator_ValidateLogging(t *testing.T) {
 			MaxSize:    100,
 			MaxAge:     7,
 			MaxBackups: 3,
-			Compress:   true,
+			Compress:   BoolPtr(true),
 		}
 
 		err := validator.ValidateLogging(config)
@@ -335,7 +335,7 @@ func TestConfigValidator_ValidateLogging(t *testing.T) {
 			MaxSize:    100,
 			MaxAge:     7,
 			MaxBackups: 3,
-			Compress:   true,
+			Compress:   BoolPtr(true),
 		}
 
 		err := validator.ValidateLogging(config)
@@ -351,7 +351,7 @@ func TestConfigValidator_ValidateLogging(t *testing.T) {
 			MaxSize:    100,
 			MaxAge:     7,
 			MaxBackups: 3,
-			Compress:   true,
+			Compress:   BoolPtr(true),
 		}
 
 		err := validator.ValidateLogging(config)
@@ -368,7 +368,7 @@ func TestConfigValidator_ValidateLogging(t *testing.T) {
 			MaxSize:    100,
 			MaxAge:     7,
 			MaxBackups: 3,
-			Compress:   true,
+			Compress:   BoolPtr(true),
 		}
 
 		err := validator.ValidateLogging(config)
@@ -386,7 +386,7 @@ func TestConfigValidator_ValidateLogging(t *testing.T) {
 			MaxSize:    100,
 			MaxAge:     7,
 			MaxBackups: 3,
-			Compress:   true,
+			Compress:   BoolPtr(true),
 		}
 
 		err := validator.ValidateLogging(config)
@@ -401,7 +401,7 @@ func TestConfigValidator_ValidateLogging(t *testing.T) {
 			MaxSize:    -1,
 			MaxAge:     7,
 			MaxBackups: 3,
-			Compress:   true,
+			Compress:   BoolPtr(true),
 		}
 
 		err := validator.ValidateLogging(config)
@@ -417,7 +417,7 @@ func TestConfigValidator_ValidateLogging(t *testing.T) {
 			MaxSize:    100,
 			MaxAge:     7,
 			MaxBackups: 3,
-			Compress:   true,
+			Compress:   BoolPtr(true),
 		}
 
 		err := validator.ValidateLogging(config)
@@ -433,7 +433,7 @@ func TestConfigValidator_ValidateStorage(t *testing.T) {
 	t.Run("valid storage config", func(t *testing.T) {
 		config := &StorageConfig{
 			DataDir:   t.TempDir(),
-			SyncWrite: true,
+			SyncWrite: BoolPtr(true),
 		}
 
 		err := validator.ValidateStorage(config)
@@ -443,7 +443,7 @@ func TestConfigValidator_ValidateStorage(t *testing.T) {
 	t.Run("empty data dir", func(t *testing.T) {
 		config := &StorageConfig{
 			DataDir:   "",
-			SyncWrite: true,
+			SyncWrite: BoolPtr(true),
 		}
 
 		err := validator.ValidateStorage(config)
@@ -454,7 +454,7 @@ func TestConfigValidator_ValidateStorage(t *testing.T) {
 	t.Run("non-existent data dir", func(t *testing.T) {
 		config := &StorageConfig{
 			DataDir:   "/non/existent/path",
-			SyncWrite: true,
+			SyncWrite: BoolPtr(true),
 		}
 
 		err := validator.ValidateStorage(config)
@@ -466,7 +466,7 @@ func TestConfigValidator_ValidateStorage(t *testing.T) {
 		tempDir := t.TempDir()
 		config := &StorageConfig{
 			DataDir:   tempDir + "/relative",
-			SyncWrite: true,
+			SyncWrite: BoolPtr(true),
 		}
 
 		err := validator.ValidateStorage(config)
@@ -484,7 +484,7 @@ func TestConfigValidator_ValidateStorage(t *testing.T) {
 
 		config := &StorageConfig{
 			DataDir:   readOnlyDir + "/subdir",
-			SyncWrite: true,
+			SyncWrite: BoolPtr(true),
 		}
 
 		err = validator.ValidateStorage(config)
@@ -499,7 +499,7 @@ func TestConfigValidator_ValidateCollector(t *testing.T) {
 
 	t.Run("valid collector config", func(t *testing.T) {
 		config := &CollectorConfig{
-			Enabled:       true,
+			Enabled:       BoolPtr(true),
 			Interval:      5 * time.Second,
 			Timeout:       3 * time.Second,
 			MaxConcurrent: 5,
@@ -511,7 +511,7 @@ func TestConfigValidator_ValidateCollector(t *testing.T) {
 
 	t.Run("negative interval", func(t *testing.T) {
 		config := &CollectorConfig{
-			Enabled:       true,
+			Enabled:       BoolPtr(true),
 			Interval:      -1 * time.Second,
 			Timeout:       3 * time.Second,
 			MaxConcurrent: 5,
@@ -524,7 +524,7 @@ func TestConfigValidator_ValidateCollector(t *testing.T) {
 
 	t.Run("negative timeout", func(t *testing.T) {
 		config := &CollectorConfig{
-			Enabled:       true,
+			Enabled:       BoolPtr(true),
 			Interval:      5 * time.Second,
 			Timeout:       -1 * time.Second,
 			MaxConcurrent: 5,
@@ -537,7 +537,7 @@ func TestConfigValidator_ValidateCollector(t *testing.T) {
 
 	t.Run("timeout greater than interval", func(t *testing.T) {
 		config := &CollectorConfig{
-			Enabled:       true,
+			Enabled:       BoolPtr(true),
 			Interval:      3 * time.Second,
 			Timeout:       5 * time.Second,
 			MaxConcurrent: 5,
@@ -551,7 +551,7 @@ func TestConfigValidator_ValidateCollector(t *testing.T) {
 
 	t.Run("negative max concurrent", func(t *testing.T) {
 		config := &CollectorConfig{
-			Enabled:       true,
+			Enabled:       BoolPtr(true),
 			Interval:      5 * time.Second,
 			Timeout:       3 * time.Second,
 			MaxConcurrent: -1,
@@ -564,7 +564,7 @@ func TestConfigValidator_ValidateCollector(t *testing.T) {
 
 	t.Run("zero max concurrent", func(t *testing.T) {
 		config := &CollectorConfig{
-			Enabled:       true,
+			Enabled:       BoolPtr(true),
 			Interval:      5 * time.Second,
 			Timeout:       3 * time.Second,
 			MaxConcurrent: 0,
@@ -577,7 +577,7 @@ func TestConfigValidator_ValidateCollector(t *testing.T) {
 
 	t.Run("very short interval", func(t *testing.T) {
 		config := &CollectorConfig{
-			Enabled:       true,
+			Enabled:       BoolPtr(true),
 			Interval:      100 * time.Millisecond,
 			Timeout:       50 * time.Millisecond,
 			MaxConcurrent: 5,
@@ -594,7 +594,7 @@ func TestConfigValidator_ValidateMetrics(t *testing.T) {
 
 	t.Run("valid metrics config", func(t *testing.T) {
 		config := &MetricsConfig{
-			Enabled:   true,
+			Enabled:   BoolPtr(true),
 			Path:      "/metrics",
 			Namespace: "winpower",
 			Subsystem: "exporter",
@@ -607,7 +607,7 @@ func TestConfigValidator_ValidateMetrics(t *testing.T) {
 
 	t.Run("empty path", func(t *testing.T) {
 		config := &MetricsConfig{
-			Enabled:   true,
+			Enabled:   BoolPtr(true),
 			Path:      "",
 			Namespace: "winpower",
 			Subsystem: "exporter",
@@ -621,7 +621,7 @@ func TestConfigValidator_ValidateMetrics(t *testing.T) {
 
 	t.Run("path without leading slash", func(t *testing.T) {
 		config := &MetricsConfig{
-			Enabled:   true,
+			Enabled:   BoolPtr(true),
 			Path:      "metrics",
 			Namespace: "winpower",
 			Subsystem: "exporter",
@@ -635,7 +635,7 @@ func TestConfigValidator_ValidateMetrics(t *testing.T) {
 
 	t.Run("empty namespace", func(t *testing.T) {
 		config := &MetricsConfig{
-			Enabled:   true,
+			Enabled:   BoolPtr(true),
 			Path:      "/metrics",
 			Namespace: "",
 			Subsystem: "exporter",
@@ -649,7 +649,7 @@ func TestConfigValidator_ValidateMetrics(t *testing.T) {
 
 	t.Run("invalid namespace format", func(t *testing.T) {
 		config := &MetricsConfig{
-			Enabled:   true,
+			Enabled:   BoolPtr(true),
 			Path:      "/metrics",
 			Namespace: "invalid-namespace",
 			Subsystem: "exporter",
@@ -663,7 +663,7 @@ func TestConfigValidator_ValidateMetrics(t *testing.T) {
 
 	t.Run("empty help text", func(t *testing.T) {
 		config := &MetricsConfig{
-			Enabled:   true,
+			Enabled:   BoolPtr(true),
 			Path:      "/metrics",
 			Namespace: "winpower",
 			Subsystem: "exporter",
@@ -677,7 +677,7 @@ func TestConfigValidator_ValidateMetrics(t *testing.T) {
 
 	t.Run("valid subsystem", func(t *testing.T) {
 		config := &MetricsConfig{
-			Enabled:   true,
+			Enabled:   BoolPtr(true),
 			Path:      "/metrics",
 			Namespace: "winpower",
 			Subsystem: "valid_subsystem",
@@ -690,7 +690,7 @@ func TestConfigValidator_ValidateMetrics(t *testing.T) {
 
 	t.Run("invalid subsystem format", func(t *testing.T) {
 		config := &MetricsConfig{
-			Enabled:   true,
+			Enabled:   BoolPtr(true),
 			Path:      "/metrics",
 			Namespace: "winpower",
 			Subsystem: "invalid-subsystem",
@@ -709,7 +709,7 @@ func TestConfigValidator_ValidateEnergy(t *testing.T) {
 
 	t.Run("valid energy config", func(t *testing.T) {
 		config := &EnergyConfig{
-			Enabled:       true,
+			Enabled:       BoolPtr(true),
 			Interval:      5 * time.Second,
 			Precision:     3,
 			StoragePeriod: 1 * time.Hour,
@@ -721,7 +721,7 @@ func TestConfigValidator_ValidateEnergy(t *testing.T) {
 
 	t.Run("negative interval", func(t *testing.T) {
 		config := &EnergyConfig{
-			Enabled:       true,
+			Enabled:       BoolPtr(true),
 			Interval:      -1 * time.Second,
 			Precision:     3,
 			StoragePeriod: 1 * time.Hour,
@@ -734,7 +734,7 @@ func TestConfigValidator_ValidateEnergy(t *testing.T) {
 
 	t.Run("negative precision", func(t *testing.T) {
 		config := &EnergyConfig{
-			Enabled:       true,
+			Enabled:       BoolPtr(true),
 			Interval:      5 * time.Second,
 			Precision:     -1,
 			StoragePeriod: 1 * time.Hour,
@@ -747,7 +747,7 @@ func TestConfigValidator_ValidateEnergy(t *testing.T) {
 
 	t.Run("precision too high", func(t *testing.T) {
 		config := &EnergyConfig{
-			Enabled:       true,
+			Enabled:       BoolPtr(true),
 			Interval:      5 * time.Second,
 			Precision:     15,
 			StoragePeriod: 1 * time.Hour,
@@ -760,7 +760,7 @@ func TestConfigValidator_ValidateEnergy(t *testing.T) {
 
 	t.Run("negative storage period", func(t *testing.T) {
 		config := &EnergyConfig{
-			Enabled:       true,
+			Enabled:       BoolPtr(true),
 			Interval:      5 * time.Second,
 			Precision:     3,
 			StoragePeriod: -1 * time.Hour,
@@ -773,7 +773,7 @@ func TestConfigValidator_ValidateEnergy(t *testing.T) {
 
 	t.Run("storage period shorter than interval", func(t *testing.T) {
 		config := &EnergyConfig{
-			Enabled:       true,
+			Enabled:       BoolPtr(true),
 			Interval:      5 * time.Minute,
 			Precision:     3,
 			StoragePeriod: 1 * time.Minute,
@@ -790,7 +790,7 @@ func TestConfigValidator_ValidateScheduler(t *testing.T) {
 
 	t.Run("valid scheduler config", func(t *testing.T) {
 		config := &SchedulerConfig{
-			Enabled:  true,
+			Enabled:  BoolPtr(true),
 			Interval: 5 * time.Second,
 		}
 
@@ -800,7 +800,7 @@ func TestConfigValidator_ValidateScheduler(t *testing.T) {
 
 	t.Run("negative interval", func(t *testing.T) {
 		config := &SchedulerConfig{
-			Enabled:  true,
+			Enabled:  BoolPtr(true),
 			Interval: -1 * time.Second,
 		}
 
@@ -811,7 +811,7 @@ func TestConfigValidator_ValidateScheduler(t *testing.T) {
 
 	t.Run("very short interval", func(t *testing.T) {
 		config := &SchedulerConfig{
-			Enabled:  true,
+			Enabled:  BoolPtr(true),
 			Interval: 100 * time.Millisecond,
 		}
 
