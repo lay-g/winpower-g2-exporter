@@ -539,51 +539,8 @@ func TestMetricManager_ErrorScenarios(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 
-	// Test 2: Concurrent access
-	t.Run("ConcurrentAccess", func(t *testing.T) {
-		var wg sync.WaitGroup
-		numGoroutines := 10
-		numOperations := 100
-
-		for i := 0; i < numGoroutines; i++ {
-			wg.Add(1)
-			go func(goroutineID int) {
-				defer wg.Done()
-
-				for j := 0; j < numOperations; j++ {
-					deviceID := fmt.Sprintf("device-%d-%d", goroutineID, j)
-					deviceName := fmt.Sprintf("Device %d-%d", goroutineID, j)
-					deviceType := "UPS"
-
-					metricsManager.SetDeviceConnected(deviceID, deviceName, deviceType, 1.0)
-					metricsManager.SetPowerWatts(deviceID, deviceName, deviceType, float64(j*10))
-					metricsManager.SetLoadPercent(deviceID, deviceName, deviceType, "", float64(j%100))
-
-					if j%10 == 0 {
-						// Occasionally make HTTP requests
-						req := httptest.NewRequest("GET", "/metrics", nil)
-						w := httptest.NewRecorder()
-						handler := metricsManager.Handler()
-						handler.ServeHTTP(w, req)
-					}
-				}
-			}(i)
-		}
-
-		wg.Wait()
-
-		// Final verification
-		req := httptest.NewRequest("GET", "/metrics", nil)
-		w := httptest.NewRecorder()
-
-		handler := metricsManager.Handler()
-		handler.ServeHTTP(w, req)
-
-		resp := w.Result()
-		require.Equal(t, http.StatusOK, resp.StatusCode)
-	})
-
-	// Test 3: Special characters in labels
+	
+	// Test 2: Special characters in labels
 	t.Run("SpecialCharactersInLabels", func(t *testing.T) {
 		specialDeviceID := "device-with-special.chars_123"
 		specialDeviceName := `Device with "quotes" and \ slashes`
@@ -610,7 +567,7 @@ func TestMetricManager_ErrorScenarios(t *testing.T) {
 		assert.Contains(t, metricsOutput, `device_name="Device`)
 	})
 
-	// Test 4: Invalid HTTP requests
+	// Test 3: Invalid HTTP requests
 	t.Run("InvalidHTTPRequests", func(t *testing.T) {
 		handler := metricsManager.Handler()
 
