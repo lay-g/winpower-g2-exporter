@@ -1,0 +1,37 @@
+POST /api/v1/auth/login HTTP/1.1
+Host: 192.168.138.107:8081
+Connection: keep-alive
+Content-Length: 44
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36
+Accept: application/json, text/plain, */*
+DNT: 1
+Content-Type: application/json
+Content-language: en
+Origin: http://192.168.138.107:8081
+Referer: http://192.168.138.107:8081/login
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7
+
+{"username":"admin","password":"Gg960901.."}
+HTTP/1.1 200 OK
+Expires: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+X-XSS-Protection: 0
+Pragma: no-cache
+Date: Mon, 13 Oct 2025 14:30:13 GMT
+Connection: keep-alive
+Vary: Origin
+Vary: Access-Control-Request-Method
+Vary: Access-Control-Request-Headers
+X-Content-Type-Options: nosniff
+Transfer-Encoding: chunked
+Content-Type: application/json
+
+{
+    "code": "000000",
+    "message": "OK",
+    "data": {
+        "deviceId": "e156e6cb-41cb-4b35-b0dd-869929186a5c",
+        "token": "eyJhbGciOiJIUzUxMiJ9.eyJjcmVhdGVfdGltZV9rZXkiOjE3NjAzNjU4MTM2NTYsInRva2VuX2lkIjoiNjE1NjlkNjItZTBmYi00ZTdmLWIyMDUtNDI4OThlZDIyMmUxIiwibG9naW5fdXNlcl90eXBlIjoiU3lzQWRtaW4iLCJsb2dpbl91c2VyX2lkIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwIiwiZXhwaXJlX3RpbWVfa2V5IjoxNzYwMzY3NjEzNjU2LCJ0b2tlbkV4cGlyZWRNaW51dGVzIjozMCwianRpIjoiNjE1NjlkNjItZTBmYi00ZTdmLWIyMDUtNDI4OThlZDIyMmUxIiwiZXhwIjoxNzYwMzY3NjEzLCJpYXQiOjE3NjAzNjU4MTMsInN1YiI6IldJTlBPV0VSX1RPS0VOIiwiaXNzIjoiV0lOUE9XRVIifQ.GyD6pluKZRMf_bQeUi2gmR4nqcKhnwG0wYFB-9jg-R4VhUJklp9vpcOa-bdZU58UDAXVwpiSFog8el24n5Fs5Q"
+    }
+}
