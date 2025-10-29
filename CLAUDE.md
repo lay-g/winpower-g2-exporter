@@ -22,10 +22,10 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 面向本项目的 AI 助手工作指引（对齐最新设计/实现/协议文档）。
 
 ## 项目上下文（最新）
-- 目标：采集 WinPower 设备数据、计算能耗，并以 Prometheus 指标导出。
+- 目标：采集 WinPower G2 设备数据、计算能耗，并以 Prometheus 指标导出。
 - 技术栈：Go 1.25+、Gin、zap、HTTP、Prometheus，测试驱动开发（TDD）。
-- 模块与依赖顺序：config → logging → storage → auth → energy → collector → metrics → server → scheduler。
 - 服务端点：`/metrics`（只读）、`/health`；`/debug/pprof` 可选开启用于诊断。
+- 项目地址：https://github.com/lay-g/winpower-g2-exporter.git
 
 ## 关键约束与行为
 - 调度器统一周期 5s；与 Prometheus 抓取间隔无关，`/metrics` 不触发采集或计算。
@@ -42,7 +42,6 @@ make clean              # 清理构建产物
 
 make fmt                # 格式化代码
 make lint               # 静态分析
-make dev                # 本地开发环境
 make deps               # 安装依赖
 make update-deps        # 更新依赖
 
@@ -53,44 +52,55 @@ make test-all           # 运行所有测试
 
 make docker-build       # 构建镜像
 make docker-run         # 运行容器
-make docker-push        # 推送镜像
 ```
-
-## 配置（CLI 与环境变量）
-- 必选参数：
-  - `--winpower.url`：WinPower 服务地址（含协议与端口）
-  - `--winpower.username`：用户名
-  - `--winpower.password`：密码
-- 可选参数：
-  - `--port`（默认 9090）、`--log-level`（debug|info|warn|error，默认 info）
-  - `--skip-ssl-verify`（默认 false，自签证书场景）
-  - `--data-dir`（默认 `./data`）、`--sync-write`（默认 true）
-- 环境变量（前缀 `WINPOWER_EXPORTER_`）：
-  - `CONSOLE_URL`、`USERNAME`、`PASSWORD`、`PORT`、`LOG_LEVEL`
-  - `SKIP_SSL_VERIFY`、`DATA_DIR`、`SYNC_WRITE`
-
-## 指标结构（摘要）
-- 命名：`winpower_exporter_*`（自监控）、`winpower_*`（连接/认证/设备/能耗）。
-- 自监控：运行状态、HTTP 请求计数/时延、采集耗时、错误数、设备数、Token 刷新计数。
-- 连接/认证：连接状态、认证状态、API 响应时延、Token 剩余有效期/有效性。
-- 设备/电源：连接状态、负载%、输入/输出电压/电流/频率、有功功率、功率因数。
-- 能耗：瞬时功率（W）、累计电能（Wh，允许负值表示净能量）。
-- 标签：`winpower_host`、`version`、`status_code`、`method`、`error_type`、`status`、
-  `device_id`、`device_name`、`device_type`、`phase`、`user_id`、`connection_type`、`auth_method`、`api_endpoint`。
-
-## 能耗计算与调度
-- 统一采集入口：调度器每 5 秒触发 Collector；解析成功后累计能耗并持久化。
-- 只读暴露：`/metrics` 仅返回当前注册的指标，不触发采集或计算。
 
 ## 测试策略（TDD）
 - 测试命令：`make test`、`make test-coverage`、`make test-integration`、`make test-all`。
 - 组织约定：测试文件与实现同包、同目录，命名 `*_test.go`。
-- Mock 建议：为 `TokenProvider`、`EnergyStore` 提供 Mock 隔离外部副作用。
+- Mock 建议：为 WinPower 客户端、Energy 模块提供 Mock 隔离外部副作用。
 - 观察性：按需开启 `/debug/pprof`；关键路径统一结构化日志。
 
+## 项目结构
+```
+winpower-g2-exporter/
+├── cmd/                         # 应用程序入口点
+│   └── winpower-g2-exporter/
+│       └── main.go               # 主程序入口
+├── internal/                    # 内部实现包
+│   ├── cmd/                     # 命令行工具实现
+│   ├── pkgs/                    # 内部公共包
+│   │   └── log/                 # 日志模块
+│   ├── config/                  # 配置管理模块
+│   ├── storage/                 # 存储模块
+│   ├── winpower/                # WinPower模块
+│   ├── collector/               # Collector模块
+│   ├── energy/                  # 电能计算模块
+│   ├── metrics/                 # 指标模块
+│   ├── server/                  # HTTP服务模块
+│   └── scheduler/               # 调度器模块
+├── docs/                        # 项目文档
+│   ├── design/                  # 设计文档
+│   └── examples/                # 使用示例
+├── tests/                       # 测试文件
+│   ├── integration/             # 集成测试
+│   └── mocks/                   # Mock对象
+├── deployments/                 # 部署配置
+├── Dockerfile                   # Docker构建文件
+├── Makefile                     # 构建和开发脚本
+├── go.mod                       # Go模块定义
+└── README.md                    # 项目说明文档
+```
+
+## 代码规范
+- 遵循 Go 官方代码规范
+- 使用 `gofmt` 格式化代码
+- 使用 `golangci-lint` 进行静态检查
+- 编写单元测试，保持 80% 以上的测试覆盖率
+- 遵循测试驱动开发(TDD)原则
+
 ## 参考文档
-- 设计：`docs/design/architecture.md`、`docs/design/metrics.md`、`docs/design/auth.md`、`docs/design/server.md`。
-- 实现：`docs/implements/overview.md` 及各模块文档。
-- 协议：`docs/protocol/authentication.md`。
+- 设计：`docs/design/architecture.md`、`docs/design/metrics.md`、`docs/design/cmd.md`、`docs/design/server.md`
+- 设计：`docs/design/config.md`、`docs/design/storage.md`、`docs/design/winpower.md`、`docs/design/collector.md`
+- 设计：`docs/design/energy.md`、`docs/design/scheduler.md`、`docs/design/logging.md`
 
 以上内容与 README、设计/实现/协议文档保持一致，作为日常协作与实现的最新依据。
