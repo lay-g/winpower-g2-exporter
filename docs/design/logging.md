@@ -88,10 +88,13 @@ internal/pkgs/log/
 
 ### 4.1 日志配置
 
+日志配置结构体定义在 `internal/pkgs/log/config.go` 中，通过顶层配置结构体引用：
+
 ```go
 package log
 
 import (
+    "fmt"
     "go.uber.org/zap"
     "go.uber.org/zap/zapcore"
 )
@@ -99,37 +102,37 @@ import (
 // Config 日志配置
 type Config struct {
     // Level 日志级别: debug, info, warn, error
-    Level string `json:"level" yaml:"level"`
+    Level string `json:"level" yaml:"level" mapstructure:"level"`
 
     // Format 日志格式: json, console
-    Format string `json:"format" yaml:"format"`
+    Format string `json:"format" yaml:"format" mapstructure:"format"`
 
     // Output 输出目标: stdout, stderr, file, both
-    Output string `json:"output" yaml:"output"`
+    Output string `json:"output" yaml:"output" mapstructure:"output"`
 
     // FilePath 文件路径（Output 为 file 或 both 时使用）
-    FilePath string `json:"file_path" yaml:"file_path"`
+    FilePath string `json:"file_path" yaml:"file_path" mapstructure:"file_path"`
 
     // MaxSize 单个日志文件最大大小（MB）
-    MaxSize int `json:"max_size" yaml:"max_size"`
+    MaxSize int `json:"max_size" yaml:"max_size" mapstructure:"max_size"`
 
     // MaxAge 日志文件保留天数
-    MaxAge int `json:"max_age" yaml:"max_age"`
+    MaxAge int `json:"max_age" yaml:"max_age" mapstructure:"max_age"`
 
     // MaxBackups 最大备份文件数
-    MaxBackups int `json:"max_backups" yaml:"max_backups"`
+    MaxBackups int `json:"max_backups" yaml:"max_backups" mapstructure:"max_backups"`
 
     // Compress 是否压缩旧日志文件
-    Compress bool `json:"compress" yaml:"compress"`
+    Compress bool `json:"compress" yaml:"compress" mapstructure:"compress"`
 
     // Development 是否开发模式
-    Development bool `json:"development" yaml:"development"`
+    Development bool `json:"development" yaml:"development" mapstructure:"development"`
 
     // EnableCaller 是否记录调用者信息
-    EnableCaller bool `json:"enable_caller" yaml:"enable_caller"`
+    EnableCaller bool `json:"enable_caller" yaml:"enable_caller" mapstructure:"enable_caller"`
 
     // EnableStacktrace 是否记录堆栈跟踪
-    EnableStacktrace bool `json:"enable_stacktrace" yaml:"enable_stacktrace"`
+    EnableStacktrace bool `json:"enable_stacktrace" yaml:"enable_stacktrace" mapstructure:"enable_stacktrace"`
 }
 
 // DefaultConfig 返回默认配置
@@ -166,30 +169,60 @@ func DevelopmentDefaults() *Config {
     }
 }
 
-// Validate 验证日志配置
+// Validate 实现ConfigValidator接口用于配置验证
 func (c *Config) Validate() error {
-    // 配置验证逻辑
+    // 验证日志级别
+    validLevels := map[string]bool{
+        "debug": true,
+        "info":  true,
+        "warn":  true,
+        "error": true,
+    }
+    if !validLevels[c.Level] {
+        return fmt.Errorf("invalid log level: %s, must be one of debug, info, warn, error", c.Level)
+    }
+
+    // 验证日志格式
+    validFormats := map[string]bool{
+        "json":    true,
+        "console": true,
+    }
+    if !validFormats[c.Format] {
+        return fmt.Errorf("invalid log format: %s, must be one of json, console", c.Format)
+    }
+
+    // 验证输出目标
+    validOutputs := map[string]bool{
+        "stdout": true,
+        "stderr": true,
+        "file":   true,
+        "both":   true,
+    }
+    if !validOutputs[c.Output] {
+        return fmt.Errorf("invalid log output: %s, must be one of stdout, stderr, file, both", c.Output)
+    }
+
+    // 如果输出到文件，验证文件路径
+    if (c.Output == "file" || c.Output == "both") && c.FilePath == "" {
+        return fmt.Errorf("file_path is required when output is 'file' or 'both'")
+    }
+
+    // 验证文件大小限制
+    if c.MaxSize <= 0 {
+        return fmt.Errorf("max_size must be positive")
+    }
+
+    // 验证保留天数
+    if c.MaxAge < 0 {
+        return fmt.Errorf("max_age cannot be negative")
+    }
+
+    // 验证备份数量
+    if c.MaxBackups < 0 {
+        return fmt.Errorf("max_backups cannot be negative")
+    }
+
     return nil
-}
-
-// LogModuleConfig 实现ModuleConfig接口用于配置注册
-type LogModuleConfig struct{}
-
-func (l *LogModuleConfig) Default() interface{} {
-    return DefaultConfig()
-}
-
-func (l *LogModuleConfig) Validate() error {
-    return nil
-}
-
-func (l *LogModuleConfig) GetYAMLKey() string {
-    return "log"
-}
-
-func init() {
-    // 注册日志配置到config系统
-    // config.RegisterModule("log", &LogModuleConfig{})
 }
 ```
 
@@ -858,9 +891,81 @@ log.Info("User authenticated",
 - 认证/采集相关日志仅包含非敏感标识（如 `device_id`、`expires_at`、`status`），避免用户名、密码、token 值进入日志。
 - 错误日志应进行脱敏与分类，避免输出原始响应中的敏感字段；必要时使用掩码（例如 `token=abc***xyz`）。
 
-## 13. 故障排查
+## 13. 配置映射
 
-### 13.1 日志查询
+> **说明**：环境变量和命令行参数的具体解析和绑定实现由 `config` 模块统一处理，本章节仅对日志模块支持的配置参数进行说明。
+
+### 13.1 环境变量支持
+
+通过config模块，日志配置支持通过环境变量进行设置，使用 `WINPOWER_EXPORTER_LOGGING_` 前缀：
+
+```bash
+# 基本配置
+WINPOWER_EXPORTER_LOGGING_LEVEL=debug
+WINPOWER_EXPORTER_LOGGING_FORMAT=json
+WINPOWER_EXPORTER_LOGGING_OUTPUT=stdout
+
+# 文件输出配置
+WINPOWER_EXPORTER_LOGGING_FILE_PATH=/var/log/winpower-exporter.log
+WINPOWER_EXPORTER_LOGGING_MAX_SIZE=100
+WINPOWER_EXPORTER_LOGGING_MAX_AGE=7
+WINPOWER_EXPORTER_LOGGING_MAX_BACKUPS=3
+WINPOWER_EXPORTER_LOGGING_COMPRESS=true
+
+# 高级配置
+WINPOWER_EXPORTER_LOGGING_DEVELOPMENT=false
+WINPOWER_EXPORTER_LOGGING_ENABLE_CALLER=false
+WINPOWER_EXPORTER_LOGGING_ENABLE_STACKTRACE=false
+```
+
+### 13.2 命令行参数支持
+
+通过config模块，日志配置支持通过命令行参数进行设置：
+
+```bash
+# 基本配置
+--logging.level debug
+--logging.format json
+--logging.output stdout
+
+# 文件输出配置
+--logging.file_path /var/log/winpower-exporter.log
+--logging.max_size 100
+--logging.max_age 7
+--logging.max_backups 3
+--logging.compress true
+
+# 高级配置
+--logging.development false
+--logging.enable_caller false
+--logging.enable_stacktrace false
+```
+
+**实现机制**：config模块会自动将环境变量中的下划线（`_`）转换为配置键中的点号（`.`），例如 `WINPOWER_EXPORTER_LOGGING_LEVEL` 对应配置键 `logging.level`。
+
+### 13.3 配置文件示例
+
+在YAML配置文件中，日志配置应使用 `logging` 作为键名：
+
+```yaml
+# config.yaml
+logging:
+  level: "info"
+  format: "json"
+  output: "stdout"
+  file_path: ""
+  max_size: 100
+  max_age: 7
+  max_backups: 3
+  compress: true
+  development: false
+  enable_caller: false
+  enable_stacktrace: false
+```
+
+## 14. 故障排查
+
+### 14.1 日志查询
 
 ```bash
 # 查询特定级别日志
@@ -873,7 +978,7 @@ jq 'select(.module == "collector")' log.json
 jq 'select(.ts >= "2025-10-16T00:00:00")' log.json
 ```
 
-### 13.2 日志分析
+### 14.2 日志分析
 
 ```bash
 # 统计错误类型
