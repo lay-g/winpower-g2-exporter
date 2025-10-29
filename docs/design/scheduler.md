@@ -93,8 +93,38 @@ func DefaultConfig() *Config {
     }
 }
 
+// Validate 实现ConfigValidator接口用于配置验证
 func (c *Config) Validate() error {
-    // 配置验证逻辑
+    // 验证采集间隔
+    if c.CollectionInterval <= 0 {
+        return fmt.Errorf("scheduler collection_interval must be positive, got %v", c.CollectionInterval)
+    }
+
+    // 采集间隔不应过长，建议不超过1分钟
+    if c.CollectionInterval > time.Minute {
+        return fmt.Errorf("scheduler collection_interval should not exceed 1 minute for real-time monitoring, got %v", c.CollectionInterval)
+    }
+
+    // 采集间隔不应过短，建议不少于1秒
+    if c.CollectionInterval < time.Second {
+        return fmt.Errorf("scheduler collection_interval should not be less than 1 second to avoid excessive load, got %v", c.CollectionInterval)
+    }
+
+    // 验证优雅关闭超时
+    if c.GracefulShutdownTimeout <= 0 {
+        return fmt.Errorf("scheduler graceful_shutdown_timeout must be positive, got %v", c.GracefulShutdownTimeout)
+    }
+
+    // 优雅关闭超时不应过短，建议不少于1秒
+    if c.GracefulShutdownTimeout < time.Second {
+        return fmt.Errorf("scheduler graceful_shutdown_timeout should not be less than 1 second, got %v", c.GracefulShutdownTimeout)
+    }
+
+    // 优雅关闭超时不应超过采集间隔太多
+    if c.GracefulShutdownTimeout > c.CollectionInterval*10 {
+        return fmt.Errorf("scheduler graceful_shutdown_timeout is too long compared to collection_interval, consider reducing it")
+    }
+
     return nil
 }
 ```

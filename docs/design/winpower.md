@@ -480,8 +480,41 @@ func DefaultConfig() *Config {
     }
 }
 
+// Validate 实现ConfigValidator接口用于配置验证
 func (c *Config) Validate() error {
-    // 配置验证逻辑
+    // 验证BaseURL
+    if c.BaseURL == "" {
+        return fmt.Errorf("winpower base_url cannot be empty")
+    }
+
+    // 验证BaseURL格式
+    if _, err := url.Parse(c.BaseURL); err != nil {
+        return fmt.Errorf("invalid winpower base_url format: %w", err)
+    }
+
+    // 验证用户名
+    if c.Username == "" {
+        return fmt.Errorf("winpower username cannot be empty")
+    }
+
+    // 验证密码
+    if c.Password == "" {
+        return fmt.Errorf("winpower password cannot be empty")
+    }
+
+    // 验证超时配置
+    if c.Timeout <= 0 {
+        return fmt.Errorf("winpower timeout must be positive, got %v", c.Timeout)
+    }
+    if c.APITimeout <= 0 {
+        return fmt.Errorf("winpower api_timeout must be positive, got %v", c.APITimeout)
+    }
+
+    // 验证刷新阈值
+    if c.RefreshThreshold < time.Minute {
+        return fmt.Errorf("winpower refresh_threshold must be at least 1 minute, got %v", c.RefreshThreshold)
+    }
+
     return nil
 }
 ```
