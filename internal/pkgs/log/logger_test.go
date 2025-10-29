@@ -3,9 +3,7 @@ package log
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"os"
-	"strings"
 	"testing"
 
 	"go.uber.org/zap/zapcore"
@@ -390,22 +388,6 @@ func TestLogLevels(t *testing.T) {
 	}
 }
 
-// 辅助函数：捕获标准输出
-func captureStdout(f func()) string {
-	old := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	f()
-
-	w.Close()
-	os.Stdout = old
-
-	var buf bytes.Buffer
-	buf.ReadFrom(r)
-	return buf.String()
-}
-
 // 测试实际的日志输出内容
 func TestActualLogOutput(t *testing.T) {
 	// 创建内存缓冲区
@@ -512,16 +494,4 @@ func BenchmarkGlobalLogger(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		Info("benchmark message", String("key", "value"), Int("count", i))
 	}
-}
-
-// 辅助函数：解析 JSON 日志行
-func parseJSONLog(line string) (map[string]interface{}, error) {
-	var result map[string]interface{}
-	err := json.Unmarshal([]byte(line), &result)
-	return result, err
-}
-
-// 辅助函数：检查字符串是否包含
-func containsString(s, substr string) bool {
-	return strings.Contains(s, substr)
 }

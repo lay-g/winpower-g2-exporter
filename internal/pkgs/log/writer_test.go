@@ -27,6 +27,7 @@ func TestBuildWriter(t *testing.T) {
 			checkFunc: func(t *testing.T, wc *WriterCloser) {
 				if wc == nil {
 					t.Error("Expected non-nil WriterCloser")
+					return
 				}
 				if len(wc.closers) != 0 {
 					t.Errorf("Expected no closers for stdout, got %d", len(wc.closers))
@@ -44,6 +45,7 @@ func TestBuildWriter(t *testing.T) {
 			checkFunc: func(t *testing.T, wc *WriterCloser) {
 				if wc == nil {
 					t.Error("Expected non-nil WriterCloser")
+					return
 				}
 				if len(wc.closers) != 0 {
 					t.Errorf("Expected no closers for stderr, got %d", len(wc.closers))
@@ -66,6 +68,7 @@ func TestBuildWriter(t *testing.T) {
 			checkFunc: func(t *testing.T, wc *WriterCloser) {
 				if wc == nil {
 					t.Error("Expected non-nil WriterCloser")
+					return
 				}
 				if len(wc.closers) != 1 {
 					t.Errorf("Expected 1 closer for file output, got %d", len(wc.closers))
@@ -88,6 +91,7 @@ func TestBuildWriter(t *testing.T) {
 			checkFunc: func(t *testing.T, wc *WriterCloser) {
 				if wc == nil {
 					t.Error("Expected non-nil WriterCloser")
+					return
 				}
 				if len(wc.closers) != 1 {
 					t.Errorf("Expected 1 closer for both output, got %d", len(wc.closers))
