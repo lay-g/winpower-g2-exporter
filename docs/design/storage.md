@@ -176,8 +176,37 @@ func DefaultConfig() *Config {
     }
 }
 
+// Validate 实现ConfigValidator接口用于配置验证
 func (c *Config) Validate() error {
-    // 配置验证逻辑
+    // 验证数据目录
+    if c.DataDir == "" {
+        return fmt.Errorf("storage data_dir cannot be empty")
+    }
+
+    // 验证数据目录路径是否有效
+    // 检查路径中是否包含非法字符
+    if strings.ContainsAny(c.DataDir, "\x00") {
+        return fmt.Errorf("storage data_dir contains invalid characters")
+    }
+
+    // 验证文件权限
+    if c.FilePermissions < 0 || c.FilePermissions > 0777 {
+        return fmt.Errorf("storage file_permissions must be between 0000 and 0777, got %o", c.FilePermissions)
+    }
+
+    // 验证目录是否存在或可以创建
+    // 尝试获取目录信息，如果不存在则检查是否可以创建
+    if _, err := os.Stat(c.DataDir); os.IsNotExist(err) {
+        // 目录不存在，尝试创建以验证权限
+        if err := os.MkdirAll(c.DataDir, 0755); err != nil {
+            return fmt.Errorf("cannot create storage data_dir '%s': %w", c.DataDir, err)
+        }
+        // 创建成功后删除，因为这里只是验证
+        os.Remove(c.DataDir)
+    } else if err != nil {
+        return fmt.Errorf("cannot access storage data_dir '%s': %w", c.DataDir, err)
+    }
+
     return nil
 }
 

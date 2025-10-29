@@ -61,8 +61,39 @@ func DefaultConfig() *Config {
     }
 }
 
+// Validate 实现ConfigValidator接口用于配置验证
 func (c *Config) Validate() error {
-    // 配置验证逻辑
+    // 验证端口号
+    if c.Port < 1 || c.Port > 65535 {
+        return fmt.Errorf("server port must be between 1 and 65535, got %d", c.Port)
+    }
+
+    // 验证主机地址
+    if c.Host == "" {
+        return fmt.Errorf("server host cannot be empty")
+    }
+
+    // 验证运行模式
+    validModes := map[string]bool{
+        "debug":   true,
+        "release": true,
+        "test":    true,
+    }
+    if !validModes[c.Mode] {
+        return fmt.Errorf("invalid server mode: %s, must be one of debug, release, test", c.Mode)
+    }
+
+    // 验证超时配置
+    if c.ReadTimeout < 0 {
+        return fmt.Errorf("read timeout cannot be negative")
+    }
+    if c.WriteTimeout < 0 {
+        return fmt.Errorf("write timeout cannot be negative")
+    }
+    if c.IdleTimeout < 0 {
+        return fmt.Errorf("idle timeout cannot be negative")
+    }
+
     return nil
 }
 
