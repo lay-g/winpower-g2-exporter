@@ -8,6 +8,8 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+const testContextKey contextKey = "test_key"
+
 func TestNewTestLogger(t *testing.T) {
 	logger := NewTestLogger()
 	if logger == nil {
@@ -121,7 +123,7 @@ func TestTestLogger_With(t *testing.T) {
 
 func TestTestLogger_WithContext(t *testing.T) {
 	logger := NewTestLogger()
-	ctx := context.WithValue(context.Background(), "test_key", "test_value")
+	ctx := context.WithValue(context.Background(), testContextKey, "test_value")
 
 	contextLogger := logger.WithContext(ctx)
 	contextLogger.Info("test message")
@@ -339,7 +341,7 @@ func TestLogCapture_Capture(t *testing.T) {
 
 func TestLogCapture_WithContext(t *testing.T) {
 	capture := NewLogCapture()
-	ctx := context.WithValue(context.Background(), "test_key", "test_value")
+	ctx := context.WithValue(context.Background(), testContextKey, "test_value")
 
 	logger := capture.WithContext(ctx)
 	logger.Info("test message")
@@ -396,7 +398,7 @@ func TestCaptureLogger_WithContext(t *testing.T) {
 	capture := NewLogCapture()
 	logger := capture.Capture()
 
-	ctx := context.WithValue(context.Background(), "test_key", "test_value")
+	ctx := context.WithValue(context.Background(), testContextKey, "test_value")
 	contextLogger := logger.WithContext(ctx)
 	contextLogger.Info("test message")
 
