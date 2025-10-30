@@ -6,7 +6,7 @@
 
 ## 背景与动机
 
-根据现有的设计文档，Collector模块在系统架构中处于协调位置，需要：
+根据现有的设计文档 [`docs/design/collector.md`](../../../docs/design/collector.md)，Collector模块在系统架构中处于协调位置，需要：
 
 1. **统一协调**: 作为数据流的中枢，协调WinPower、Energy和Metrics模块
 2. **唯一触发**: 作为唯一触发电能计算的模块，避免多重触发导致的混乱
@@ -14,6 +14,17 @@
 4. **可靠性**: 确保数据采集和电能计算的完整性和一致性
 
 当前项目中已有的模块（winpower-client、energy-module、storage-module、logging-module）已经实现或正在实现，但缺少collector模块来协调这些组件的工作。
+
+### 设计文档参考
+
+本提案基于以下原始设计文档：
+
+- **[Collector模块设计文档](../../../docs/design/collector.md)** - 详细的架构设计、组件职责和数据流程
+- **[系统架构设计](../../../docs/design/architecture.md)** - 整体系统架构和模块间关系
+- **[WinPower模块设计](../../../docs/design/winpower.md)** - WinPower客户端接口和数据结构
+- **[Energy模块设计](../../../docs/design/energy.md)** - 电能计算模块接口和算法
+- **[Metrics模块设计](../../../docs/design/metrics.md)** - 指标收集和暴露机制
+- **[Scheduler模块设计](../../../docs/design/scheduler.md)** - 调度器设计和触发机制
 
 ## 提案变更
 

@@ -1,5 +1,12 @@
 # Collector Module Implementation Tasks
 
+## 设计基础
+
+本实施计划基于以下设计文档：
+- **[原始设计文档](../../../docs/design/collector.md)** - 架构设计和组件职责
+- **[提案设计文档](design.md)** - 详细的技术设计实现
+- **[需求规格文档](specs/collector-module/spec.md)** - 具体的功能需求
+
 ## 实施策略
 
 按照TDD（测试驱动开发）原则和严格的依赖顺序执行，确保每个阶段都有完整的测试覆盖和验证。
