@@ -27,31 +27,29 @@
 **验收标准**: 项目结构创建完成，`go build` 无错误
 
 ### 1.2 定义接口契约
-**预计时间**: 1.5小时
+**预计时间**: 1小时
 **优先级**: 🔴 高
 **依赖**: 1.1
 
 - [ ] 在 `interfaces.go` 中定义 `CollectorInterface`
-- [ ] 在 `interfaces.go` 中定义 `WinPowerClient` 接口
-- [ ] 在 `interfaces.go` 中定义 `EnergyInterface` 接口
 - [ ] 在 `types.go` 中定义核心数据结构：
   - `CollectionResult`
   - `DeviceCollectionInfo`
   - `CollectionError`
 - [ ] 在 `errors.go` 中定义错误类型
+- [ ] 确认WinPower和Energy模块的接口已正确导入
 
 **验收标准**: 接口定义清晰，通过 `go vet` 检查
 
 ### 1.3 编写接口测试 (TDD第一步)
-**预计时间**: 2小时
+**预计时间**: 1.5小时
 **优先级**: 🔴 高
 **依赖**: 1.2
 
-- [ ] 在 `interfaces_test.go` 中创建Mock结构：
-  - `MockWinPowerClient`
-  - `MockEnergyService`
-- [ ] 编写接口契约测试，验证接口方法签名
-- [ ] 编写数据结构验证测试
+- [ ] 在 `interfaces_test.go` 中创建CollectorInterface的Mock结构
+- [ ] 编写接口契约测试，验证CollectorInterface方法签名
+- [ ] 编写数据结构验证测试（CollectionResult、DeviceCollectionInfo等）
+- [ ] 编写错误类型测试
 - [ ] 运行测试确保所有Mock工作正常
 
 **验收标准**: 所有接口测试通过，Mock对象功能完整
@@ -221,13 +219,13 @@
 
 | 阶段 | 预计时间 | 开始时间 | 完成时间 | 关键交付物 |
 |------|----------|----------|----------|------------|
-| Phase 1 | 4小时 | Day 1 上午 | Day 1 中午 | 基础结构和接口定义 |
+| Phase 1 | 3.5小时 | Day 1 上午 | Day 1 中午 | 基础结构和接口定义 |
 | Phase 2 | 10小时 | Day 1 中午 | Day 2 下午 | 核心功能实现完成 |
 | Phase 3 | 3小时 | Day 2 下午 | Day 2 傍晚 | 错误处理和日志完善 |
 | Phase 4 | 2小时 | Day 2 傍晚 | Day 3 上午 | 测试覆盖率达到标准 |
 | Phase 5 | 3小时 | Day 3 上午 | Day 3 下午 | 代码质量和文档完成 |
 
-**总预计时间**: 22小时 (3个工作日)
+**总预计时间**: 21.5小时 (3个工作日)
 
 ---
 
