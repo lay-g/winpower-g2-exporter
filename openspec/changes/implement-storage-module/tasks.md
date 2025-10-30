@@ -93,7 +93,7 @@ This document outlines the ordered tasks for implementing the storage module, fo
 - [x] Execute `make lint` and fix all issues
 - [x] Ensure all tests pass (`make test`)
 - [x] Verify test coverage (`make test-coverage`)
-- [ ] Run integration tests (`make test-integration`)
+- [x] Run integration tests (`make test-integration`)
 
 ## Task 14: Integration with Existing Modules
 - [x] Test integration with logging module
