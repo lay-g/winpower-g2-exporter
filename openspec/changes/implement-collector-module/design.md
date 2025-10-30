@@ -1,5 +1,9 @@
 # Collector Module Design Document
 
+## 设计基础
+
+本文档基于原始设计文档 [`docs/design/collector.md`](../../../docs/design/collector.md) 进行详细的技术设计实现，补充了具体的接口定义、数据结构和实现细节。
+
 ## 架构设计
 
 ### 模块定位
