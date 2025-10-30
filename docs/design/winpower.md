@@ -466,7 +466,6 @@ type Config struct {
     Username        string        `yaml:"username" validate:"required"`
     Password        string        `yaml:"password" validate:"required"`
     Timeout         time.Duration `yaml:"timeout" validate:"min=1s"`
-    APITimeout      time.Duration `yaml:"api_timeout" validate:"min=1s"`
     SkipSSLVerify   bool          `yaml:"skip_ssl_verify"`
     RefreshThreshold time.Duration `yaml:"refresh_threshold" validate:"min=1m"`
 }
@@ -474,7 +473,6 @@ type Config struct {
 func DefaultConfig() *Config {
     return &Config{
         Timeout:          15 * time.Second,
-        APITimeout:       10 * time.Second,
         SkipSSLVerify:    false,
         RefreshThreshold: 5 * time.Minute,
     }
@@ -506,9 +504,6 @@ func (c *Config) Validate() error {
     if c.Timeout <= 0 {
         return fmt.Errorf("winpower timeout must be positive, got %v", c.Timeout)
     }
-    if c.APITimeout <= 0 {
-        return fmt.Errorf("winpower api_timeout must be positive, got %v", c.APITimeout)
-    }
 
     // 验证刷新阈值
     if c.RefreshThreshold < time.Minute {
@@ -527,7 +522,6 @@ winpower:
   username: "admin"
   password: "secret"
   timeout: 15s
-  api_timeout: 10s
   skip_ssl_verify: false
   refresh_threshold: 5m
 ```
