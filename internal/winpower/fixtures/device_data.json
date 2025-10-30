@@ -1,0 +1,77 @@
+{
+    "total": 1,
+    "pageSize": 20,
+    "currentPage": 1,
+    "data": [
+        {
+            "assetDevice": {
+                "id": "e156e6cb-41cb-4b35-b0dd-869929186a5c",
+                "deviceType": 1,
+                "model": "ON-LINE",
+                "alias": "C3K",
+                "protocolId": 13,
+                "connectType": 1,
+                "comPort": "COM3",
+                "baudRate": 2400,
+                "areaId": "00000000-0000-0000-0000-000000000000",
+                "isActive": true,
+                "firmwareVersion": "03.09",
+                "createTime": "2025-10-13T08:37:57Z",
+                "warrantyStatus": 0
+            },
+            "realtime": {
+                "inputVolt1": "236.8",
+                "outputVoltageType": "0",
+                "loadPercent": "6",
+                "isCharging": "1",
+                "inputTransformerType": "0",
+                "batVoltP": "81.4",
+                "outputCurrent1": "1.1",
+                "upsTemperature": "27.0",
+                "mode": "3",
+                "batRemainTime": "6723",
+                "loadVa1": "198",
+                "faultCode": "",
+                "outputVolt1": "220.1",
+                "outputFreq": "49.9",
+                "inputFreq": "49.9",
+                "loadTotalVa": "198",
+                "batteryStatus": "2",
+                "testStatus": "1",
+                "loadTotalWatt": "195",
+                "loadWatt1": "195",
+                "batCapacity": "90",
+                "status": "1"
+            },
+            "config": {
+                "inputPhaseNumber": "1",
+                "ratingBatUnitNumber": "6",
+                "upsModuleNumber": "1",
+                "ratingBatVoltPerUnit": "12",
+                "ratingVa": "3000",
+                "inputSourceNumber": "1",
+                "ratingVolt": "220",
+                "outputPhaseNumber": "1",
+                "ratingFreq": "50",
+                "ratingBatVolt": "72"
+            },
+            "setting": {
+                "enableAudible": "1",
+                "enableBypassWhenTurnOff": "0",
+                "batteryModuleNumber": "1",
+                "autoTestPeriod": "90",
+                "enableAutoRestart": "1"
+            },
+            "activeAlarms": [],
+            "controlSupported": {
+                "supportQuickTest": true,
+                "supportDeepTest": true,
+                "supportTestDuration": true,
+                "supportShutdown": true
+            },
+            "connected": true
+        }
+    ],
+    "code": "000000",
+    "msg": "OK"
+}
