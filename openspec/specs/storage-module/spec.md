@@ -1,0 +1,215 @@
+# Storage Module Specification
+
+## Purpose
+
+This specification defines the requirements for the storage module in the WinPower G2 Exporter, which provides file-based persistence for accumulated energy data across application restarts.
+
+## Requirements
+
+### Requirement: Storage Configuration Management
+The storage module SHALL provide a comprehensive Config structure that manages data directory path, file permissions, and validation integration with the main configuration system.
+
+#### Scenario: Application starts with storage configuration
+- **WHEN** the application initializes the storage module
+- **THEN** it should load and validate storage configuration parameters
+- **AND** accept valid configurations while rejecting invalid ones with clear error messages
+
+### Requirement: PowerData Structure Definition
+The storage module SHALL define a standardized PowerData structure that represents power information with timestamp and energy fields that can be easily serialized to and deserialized from files.
+
+#### Scenario: Power data is passed between modules
+- **WHEN** modules need to store or retrieve power information
+- **THEN** use PowerData struct with Timestamp and EnergyWH fields
+- **AND** ensure easy serialization to the two-line file format
+
+### Requirement: File Path Management
+The storage module SHALL implement safe file path construction that validates device IDs and prevents directory traversal attacks while keeping all files within the configured data directory.
+
+#### Scenario: File path is constructed for device
+- **WHEN** a device ID and configuration are provided
+- **THEN** construct a safe file path within directory bounds
+- **AND** validate device ID to prevent path traversal
+
+### Requirement: Atomic File Operations
+The storage module SHALL ensure that file write operations are atomic to prevent data corruption during application crashes or unexpected termination.
+
+#### Scenario: Application crashes during file write
+- **WHEN** a file write operation is in progress and application crashes
+- **THEN** the file should contain either complete new data or old data
+- **AND** never be left in a corrupted partial state
+
+### Requirement: Error Handling and Recovery
+The storage module SHALL provide comprehensive error handling with specific error types, proper error wrapping, and meaningful recovery guidance for different failure scenarios.
+
+#### Scenario: Storage operations encounter errors
+- **WHEN** file operations fail due to various reasons
+- **THEN** provide specific error types and recovery guidance
+- **AND** maintain proper error context with wrapping
+
+### Requirement: Logging Integration
+The storage module SHALL integrate with the project's logging system to provide structured logging for all storage operations with appropriate levels and contextual information.
+
+#### Scenario: Storage operations are performed
+- **WHEN** read/write operations are executed
+- **THEN** log operations with appropriate levels and context
+- **AND** include device ID, operation type, and timing information
+
+### Requirement: Device File Initialization
+The storage module SHALL handle initialization of new device files by providing sensible default values when no existing file is found.
+
+#### Scenario: Reading data for new device
+- **WHEN** a read operation is requested for a new device
+- **THEN** return initialized PowerData with zero energy and current timestamp
+- **AND** create the device file for future operations
+
+### Requirement: Data Validation
+The storage module SHALL implement comprehensive validation for both input data and read data to ensure integrity and prevent corruption.
+
+#### Scenario: Power data is processed
+- **WHEN** data is being written or read
+- **THEN** validate correct format and reasonable values
+- **AND** check timestamp validity and energy value constraints
+
+### Requirement: Multi-Device Support
+The storage module SHALL support multiple devices simultaneously with independent data storage without interference between devices.
+
+#### Scenario: Multiple devices are monitored
+- **WHEN** storage operations are performed for different devices
+- **THEN** each device's data should be stored independently
+- **AND** operations on one device should not affect others
+
+### Requirement: File System Permissions
+The storage module SHALL correctly handle file system permissions to ensure proper access control for created and modified files.
+
+#### Scenario: Files are created or modified
+- **WHEN** storage module creates or modifies files
+- **THEN** files should have the specified permissions
+- **AND** respect the configured permission settings
+
+### Requirement: Directory Management
+The storage module SHALL ensure the data directory exists and is accessible during initialization, creating it if necessary with proper error handling.
+
+#### Scenario: Storage module is initialized
+- **WHEN** the storage module starts with a data directory
+- **THEN** create the directory if it doesn't exist
+- **AND** validate accessibility and handle permission issues
+
+### Requirement: Cross-Platform Compatibility
+The storage module SHALL work consistently across different operating systems with proper path handling and file operations.
+
+#### Scenario: Module runs on different platforms
+- **WHEN** file operations are performed on Windows, Linux, or macOS
+- **THEN** they should work consistently with proper path handling
+- **AND** handle platform-specific differences transparently
+
+### Requirement: StorageManager Interface
+The storage module SHALL provide a clear and simple StorageManager interface that allows other modules to read and write device power data using straightforward methods.
+
+#### Scenario: Other modules need storage functionality
+- **WHEN** modules need to store or retrieve power data
+- **THEN** they should be able to use simple Read/Write methods
+- **AND** interact through a well-defined interface
+
+### Requirement: FileWriter Interface
+The storage module SHALL provide a FileWriter interface that can be mocked for testing and handles device data writing operations.
+
+#### Scenario: Storage manager needs to write files
+- **WHEN** writing device data to persistent storage
+- **THEN** it should use a FileWriter interface that can be mocked for testing
+- **AND** provide clean abstraction for file writing operations
+
+### Requirement: FileReader Interface
+The storage module SHALL provide a FileReader interface that can be mocked for testing and handles device data reading operations.
+
+#### Scenario: Storage manager needs to read files
+- **WHEN** reading device data from persistent storage
+- **THEN** it should use a FileReader interface that can be mocked for testing
+- **AND** provide clean abstraction for file reading operations
+
+### Requirement: Constructor Function Interface
+The storage module SHALL provide a constructor function that accepts config and logger dependencies for proper dependency injection.
+
+#### Scenario: Storage module needs to be initialized
+- **WHEN** the application starts and creates module instances
+- **THEN** it should use a constructor function that accepts config and logger dependencies
+- **AND** follow dependency injection patterns for testability
+
+### Requirement: FileStorageManager Core Implementation
+The storage module SHALL implement a FileStorageManager that handles file I/O, data validation, path management, and operation logging when created with valid config and logger.
+
+#### Scenario: FileStorageManager performs operations
+- **WHEN** Write and Read operations are performed on a FileStorageManager
+- **THEN** it should handle file I/O, validate data, manage paths, and log operations appropriately
+- **AND** provide reliable storage functionality
+
+### Requirement: File Writing Implementation
+The storage module SHALL implement a FileWriter that formats data correctly, writes atomically, sets permissions, and handles errors when initialized with config and logger.
+
+#### Scenario: FileWriter writes device data
+- **WHEN** Write is called with device ID and PowerData
+- **THEN** it should format data correctly, write atomically, set permissions, and handle errors
+- **AND** ensure data integrity during write operations
+
+### Requirement: File Reading Implementation
+The storage module SHALL implement a FileReader that handles missing files, parses existing files, validates data, and returns appropriate results when initialized with config and logger.
+
+#### Scenario: FileReader reads device data
+- **WHEN** Read is called with a device ID
+- **THEN** it should handle missing files, parse existing files, validate data, and return appropriate results
+- **AND** provide graceful handling of various file states
+
+### Requirement: Atomic File Write Strategy
+The storage module SHALL implement atomic file writing using temporary file with rename or direct sync write to ensure data integrity.
+
+#### Scenario: Atomic file write is needed
+- **WHEN** a file write operation needs to be performed
+- **THEN** it should use either temporary file with rename or direct sync write to ensure atomicity
+- **AND** prevent data corruption during writes
+
+### Requirement: File Format Specification
+The storage module SHALL use a consistent, parseable two-line file format that supports both human reading and programmatic parsing.
+
+#### Scenario: Power data is written to files
+- **WHEN** data needs to be persisted
+- **THEN** it should follow the two-line format (timestamp, energy value)
+- **AND** maintain consistency across all device files
+
+### Requirement: Unit Test Coverage
+The storage module SHALL provide comprehensive unit tests that cover all public methods, error conditions, and edge cases with >80% coverage.
+
+#### Scenario: Unit tests are executed
+- **WHEN** unit tests are written and test cases are executed
+- **THEN** they should cover all public methods, error conditions, and edge cases with >80% coverage
+- **AND** ensure thorough testing of all functionality
+
+### Requirement: Mock-Based Testing
+The storage module SHALL use mocks for file I/O operations in unit tests to verify correct behavior without touching the actual file system.
+
+#### Scenario: File operations are tested with mocks
+- **WHEN** unit tests need to test file operations and mocks are used for file I/O
+- **THEN** tests should verify correct behavior without touching the actual file system
+- **AND** provide isolated testing of storage logic
+
+### Requirement: Integration Testing
+The storage module SHALL provide integration tests that use temporary directories and test actual file I/O behavior for real-world validation.
+
+#### Scenario: Integration tests use real file operations
+- **WHEN** integration tests are executed and real file operations are performed
+- **THEN** they should use temporary directories and test actual file I/O behavior
+- **AND** validate real-world file handling scenarios
+
+### Requirement: Test-Driven Development (TDD)
+The storage module SHALL follow TDD principles where failing tests are written first, followed by implementation to make tests pass.
+
+#### Scenario: TDD workflow is followed
+- **WHEN** a new feature or method is needed and development begins
+- **THEN** failing tests should be written first, followed by implementation to make tests pass
+- **AND** ensure test-driven development approach
+
+### Requirement: Test Data Management
+The storage module SHALL ensure tests use isolated data and clean up properly to avoid interference between test cases.
+
+#### Scenario: Test data isolation is maintained
+- **WHEN** multiple test cases run and they create test data
+- **THEN** each test should use isolated data and clean up properly to avoid interference
+- **AND** prevent test contamination
