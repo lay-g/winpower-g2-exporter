@@ -37,7 +37,7 @@ WinPower模块负责与WinPower G2系统的完整交互，包括身份认证、T
 │                        Interfaces                             │
 │  ┌────────────────────────────────────────────────────────┐   │
 │  │            WinPowerClient Interface                    │   │
-│  │  - CollectDeviceData(ctx) // 始终包含电能计算          │   │
+│  │  - CollectDeviceData(ctx) // 采集设备原始数据            │   │
 │  │  - GetConnectionStatus()                               │   │
 │  │  - GetLastCollectionTime()                             │   │
 │  └────────────────────────────────────────────────────────┘   │
