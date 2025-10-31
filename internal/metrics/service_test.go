@@ -8,19 +8,19 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 
 	"github.com/lay-g/winpower-g2-exporter/internal/collector"
 	"github.com/lay-g/winpower-g2-exporter/internal/metrics/mocks"
+	"github.com/lay-g/winpower-g2-exporter/internal/pkgs/log"
 )
 
 func TestNewMetricsService(t *testing.T) {
-	logger := zap.NewNop()
+	logger := log.NewTestLogger()
 
 	tests := []struct {
 		name       string
 		collector  collector.CollectorInterface
-		logger     *zap.Logger
+		logger     log.Logger
 		config     *MetricsConfig
 		wantErr    error
 		validateFn func(*testing.T, *MetricsService)
@@ -91,7 +91,7 @@ func TestNewMetricsService(t *testing.T) {
 }
 
 func TestMetricsService_updateMetrics(t *testing.T) {
-	logger := zap.NewNop()
+	logger := log.NewTestLogger()
 	mockCollector := mocks.NewMockCollector()
 	service, err := NewMetricsService(mockCollector, logger, nil)
 	require.NoError(t, err)
@@ -154,7 +154,7 @@ func TestMetricsService_updateMetrics(t *testing.T) {
 }
 
 func TestMetricsService_updateDeviceMetrics(t *testing.T) {
-	logger := zap.NewNop()
+	logger := log.NewTestLogger()
 	mockCollector := mocks.NewMockCollector()
 	service, err := NewMetricsService(mockCollector, logger, nil)
 	require.NoError(t, err)
@@ -205,7 +205,7 @@ func TestMetricsService_updateDeviceMetrics(t *testing.T) {
 }
 
 func TestMetricsService_handleCollectionError(t *testing.T) {
-	logger := zap.NewNop()
+	logger := log.NewTestLogger()
 	mockCollector := mocks.NewMockCollector()
 	service, err := NewMetricsService(mockCollector, logger, nil)
 	require.NoError(t, err)
@@ -239,7 +239,7 @@ func TestMetricsService_handleCollectionError(t *testing.T) {
 }
 
 func TestMetricsService_updateSelfMetrics(t *testing.T) {
-	logger := zap.NewNop()
+	logger := log.NewTestLogger()
 	mockCollector := mocks.NewMockCollector()
 	service, err := NewMetricsService(mockCollector, logger, nil)
 	require.NoError(t, err)
@@ -257,7 +257,7 @@ func TestMetricsService_updateSelfMetrics(t *testing.T) {
 }
 
 func TestMetricsService_updateMemoryMetrics(t *testing.T) {
-	logger := zap.NewNop()
+	logger := log.NewTestLogger()
 	mockCollector := mocks.NewMockCollector()
 	config := DefaultMetricsConfig()
 	config.EnableMemoryMetrics = true
@@ -325,17 +325,17 @@ func TestDefaultMetricsConfig(t *testing.T) {
 	assert.True(t, config.EnableMemoryMetrics)
 }
 
-func TestZapLogger(t *testing.T) {
-	logger := zap.NewNop()
-	zapLog := &zapLogger{logger: logger}
+func TestPromhttpLogger(t *testing.T) {
+	logger := log.NewTestLogger()
+	promLog := &promhttpLogger{logger: logger}
 
 	// Test that Println doesn't panic
-	zapLog.Println("test message")
-	zapLog.Println("test", "with", "multiple", "args")
+	promLog.Println("test message")
+	promLog.Println("test", "with", "multiple", "args")
 }
 
 func TestMetricsService_createDeviceMetrics(t *testing.T) {
-	logger := zap.NewNop()
+	logger := log.NewTestLogger()
 	mockCollector := mocks.NewMockCollector()
 	service, err := NewMetricsService(mockCollector, logger, nil)
 	require.NoError(t, err)
@@ -352,7 +352,7 @@ func TestMetricsService_createDeviceMetrics(t *testing.T) {
 }
 
 func TestMetricsService_concurrentAccess(t *testing.T) {
-	logger := zap.NewNop()
+	logger := log.NewTestLogger()
 	mockCollector := mocks.NewMockCollectorWithDevices()
 	service, err := NewMetricsService(mockCollector, logger, nil)
 	require.NoError(t, err)
