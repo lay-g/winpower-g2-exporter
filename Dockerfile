@@ -26,10 +26,6 @@ FROM alpine:latest
 # 安装必要工具
 RUN apk --no-cache add ca-certificates tzdata wget
 
-# 创建非 root 用户
-RUN addgroup -g 1001 -S winpower && \
-    adduser -u 1001 -S winpower -G winpower
-
 # 设置工作目录
 WORKDIR /app
 
@@ -41,12 +37,6 @@ RUN mkdir -p /app/config /app/data
 
 # 复制配置示例文件
 COPY --from=builder /app/config/config.example.yaml /app/config/config.example.yaml
-
-# 设置目录权限
-RUN chown -R winpower:winpower /app
-
-# 切换到非 root 用户
-USER winpower
 
 # 暴露端口
 EXPOSE 9090
