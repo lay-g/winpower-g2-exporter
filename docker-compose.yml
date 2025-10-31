@@ -1,9 +1,24 @@
+# WinPower G2 Exporter Docker Compose 配置
+#
+# 镜像说明：
+# - latest: 最新版本
+# - v1.0.0: 特定版本（推荐生产环境使用）
+# - v1.0: 主.次版本
+#
+# 完整镜像地址: ghcr.io/lay-g/winpower-g2-exporter:TAG
+#
+# 使用示例：
+#   image: ghcr.io/lay-g/winpower-g2-exporter:v1.0.0
+#   image: ghcr.io/lay-g/winpower-g2-exporter:latest
+
 version: "3.8"
 
 services:
   # WinPower G2 Exporter 服务
   winpower-exporter:
-    image: winpower-g2-exporter:latest
+    # 使用 GitHub Container Registry 中的镜像
+    # 可选标签: latest, v1.0.0, v1.0, 等语义化版本
+    image: ghcr.io/lay-g/winpower-g2-exporter:latest
     container_name: winpower-g2-exporter
     restart: unless-stopped
 
