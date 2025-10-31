@@ -47,7 +47,6 @@ func (cs *CollectorService) CollectDeviceData(ctx context.Context) (*CollectionR
 	}
 
 	start := time.Now()
-	cs.logger.Debug("Starting device data collection")
 
 	// Collect data from WinPower
 	devices, err := cs.collectFromWinPower(ctx)
@@ -66,9 +65,8 @@ func (cs *CollectorService) CollectDeviceData(ctx context.Context) (*CollectionR
 	// Process device data and trigger energy calculations
 	result := cs.processDeviceData(ctx, devices, start)
 
-	cs.logger.Info("Device data collection completed",
+	cs.logger.Info("collection completed",
 		log.Int("device_count", result.DeviceCount),
-		log.Bool("success", result.Success),
 		log.Duration("duration", result.Duration))
 
 	return result, nil
@@ -80,9 +78,6 @@ func (cs *CollectorService) collectFromWinPower(ctx context.Context) ([]winpower
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrWinPowerCollection, err)
 	}
-
-	cs.logger.Debug("Successfully collected data from WinPower",
-		log.Int("device_count", len(devices)))
 
 	return devices, nil
 }

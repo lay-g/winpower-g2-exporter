@@ -67,7 +67,7 @@ func (s *DefaultScheduler) Start(ctx context.Context) error {
 	go s.collectionLoop()
 
 	s.logger.Info("scheduler started",
-		"collection_interval", s.config.CollectionInterval,
+		"interval", s.config.CollectionInterval,
 	)
 
 	return nil
@@ -111,7 +111,7 @@ func (s *DefaultScheduler) Stop(ctx context.Context) error {
 
 	select {
 	case <-done:
-		s.logger.Info("scheduler stopped gracefully")
+		s.logger.Info("scheduler stopped")
 		return nil
 	case <-time.After(timeout):
 		s.logger.Error("scheduler shutdown timeout",

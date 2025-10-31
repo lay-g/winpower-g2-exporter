@@ -99,10 +99,6 @@ func (s *HTTPServer) Start() error {
 	s.running = true
 	s.mu.Unlock()
 
-	s.log.Info("Starting HTTP server",
-		"addr", s.srv.Addr,
-	)
-
 	// Start server in a goroutine
 	go func() {
 		if err := s.srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -112,7 +108,7 @@ func (s *HTTPServer) Start() error {
 		}
 	}()
 
-	s.log.Info("HTTP server started successfully",
+	s.log.Info("HTTP server started",
 		"addr", s.srv.Addr,
 	)
 
@@ -128,7 +124,7 @@ func (s *HTTPServer) Stop(ctx context.Context) error {
 	}
 	s.mu.Unlock()
 
-	s.log.Info("Shutting down HTTP server gracefully",
+	s.log.Info("Shutting down HTTP server",
 		"timeout", s.cfg.ShutdownTimeout.String(),
 	)
 
@@ -152,7 +148,7 @@ func (s *HTTPServer) Stop(ctx context.Context) error {
 	s.running = false
 	s.mu.Unlock()
 
-	s.log.Info("HTTP server stopped successfully")
+	s.log.Info("HTTP server stopped")
 	return nil
 }
 
