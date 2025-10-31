@@ -89,6 +89,32 @@ type HealthService interface {
 }
 ```
 
+## What Changes
+
+### 新增文件
+- `internal/server/server.go` - HTTP服务器实现，包含Server接口和HTTPServer结构体
+- `internal/server/config.go` - 服务器配置结构体定义和验证
+- `internal/server/middleware.go` - Logger和Recovery中间件实现
+- `internal/server/routes.go` - 路由注册和端点处理
+- `internal/server/server_test.go` - 服务器单元测试
+- `internal/server/integration_test.go` - 集成测试
+
+### 新增接口
+- `Server` 接口 - 定义Start/Stop方法
+- `MetricsService` 接口 - 指标渲染服务接口
+- `HealthService` 接口 - 健康检查服务接口
+
+### 新增配置结构
+- `Config` 结构体 - 包含端口、主机、超时等服务器配置参数
+
+### 功能特性
+- 基于Gin框架的HTTP服务器
+- 支持/metrics端点用于Prometheus指标导出
+- 支持/health端点用于健康检查
+- 可选的pprof调试支持
+- 优雅关闭机制
+- 结构化日志记录
+
 ## 实现计划
 
 1. **配置定义**：实现Config结构体和验证逻辑
