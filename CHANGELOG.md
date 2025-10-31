@@ -5,6 +5,17 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.1] - 2025-10-31
+
+### 修复
+- 修复 Docker 容器启动命令，使用明确的 serve 子命令
+- 更新 Docker Compose 镜像引用为 GitHub Container Registry
+- 清理 WinPower 客户端代码中的空行
+
+### 改进
+- 添加 release 和 tag 目标到 .PHONY 声明
+- 完善 Docker 相关配置
+
 ## [0.1.0] - 2025-10-31
 
 ### 新增
