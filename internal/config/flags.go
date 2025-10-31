@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -51,9 +52,22 @@ func (l *Loader) bindFlags() error {
 	flags.Bool("logging.enable-stacktrace", false, "Enable stacktrace logging")
 
 	// 绑定到 viper（转换短横线为下划线）
-	if err := l.viper.BindPFlags(flags); err != nil {
-		return err
-	}
+	// Parse command line arguments first
+	_ = flags.Parse(os.Args[1:])
+
+	// Only bind flags that were actually set on the command line
+	// This prevents empty string defaults from overriding environment variables
+	changedFlags := make(map[string]bool)
+	flags.Visit(func(f *pflag.Flag) {
+		changedFlags[f.Name] = true
+	})
+
+	// Bind only the changed flags
+	flags.VisitAll(func(f *pflag.Flag) {
+		if changedFlags[f.Name] {
+			l.viper.BindPFlag(f.Name, f)
+		}
+	})
 
 	l.flags = flags
 	return nil

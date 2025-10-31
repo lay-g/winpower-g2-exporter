@@ -101,6 +101,22 @@ func (l *Loader) Load() (*Config, error) {
 		}
 	}
 
+	// Manually populate fields that weren't unmarshaled correctly
+	// This is necessary because flags with empty defaults can prevent
+	// environment variables from being unmarshaled into nested structs
+	if config.WinPower.BaseURL == "" {
+		config.WinPower.BaseURL = l.viper.GetString("winpower.base_url")
+	}
+	if config.WinPower.Username == "" {
+		config.WinPower.Username = l.viper.GetString("winpower.username")
+	}
+	if config.WinPower.Password == "" {
+		config.WinPower.Password = l.viper.GetString("winpower.password")
+	}
+	if config.WinPower.UserAgent == "" {
+		config.WinPower.UserAgent = l.viper.GetString("winpower.user_agent")
+	}
+
 	// Viper may not have filled in all fields from defaults, so fill them manually
 	// This ensures all duration fields get their default values if not specified
 	if config.Server.ReadTimeout == 0 {
