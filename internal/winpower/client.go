@@ -266,7 +266,6 @@ func (c *Client) incrementCollectionCount() {
 	c.collectionCount++
 }
 
-
 // GetTokenExpiresAt returns the expiration time of the current token.
 func (c *Client) GetTokenExpiresAt() time.Time {
 	return c.tokenManager.GetExpiresAt()
