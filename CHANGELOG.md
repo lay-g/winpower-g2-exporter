@@ -5,6 +5,13 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.7] - 2025-10-31
+
+### 变更
+- 简化 Dockerfile 配置，移除非 root 用户设置
+- 减少镜像复杂性和潜在的运行时问题
+- 优化部署流程，提高容器启动效率
+
 ## [0.1.6] - 2025-10-31
 
 ### 改进
