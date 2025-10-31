@@ -111,7 +111,7 @@ func (s *DefaultScheduler) Stop(ctx context.Context) error {
 
 	select {
 	case <-done:
-		s.logger.Info("scheduler stopped")
+		s.logger.Info("scheduler stopped gracefully")
 		return nil
 	case <-time.After(timeout):
 		s.logger.Error("scheduler shutdown timeout",
