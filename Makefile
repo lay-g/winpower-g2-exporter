@@ -5,12 +5,12 @@ BINARY_NAME=winpower-g2-exporter
 MIGRATION_TOOL=winpower-config-migrate
 VERSION=$(shell cat VERSION 2>/dev/null || echo "dev")
 DISPLAY_VERSION=v$(shell cat VERSION 2>/dev/null || echo "dev")
-BUILD_TIME=$(shell date -u '+%Y-%m-%d_%H:%M:%S')
+BUILD_TIME=$(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
 GIT_COMMIT=$(shell git rev-parse HEAD 2>/dev/null || echo "unknown")
 GO_VERSION=$(shell go version | awk '{print $$3}')
 
 # 构建标志
-LDFLAGS=-ldflags "-X github.com/lay-g/winpower-g2-exporter/internal/cmd.Version=$(VERSION) -X github.com/lay-g/winpower-g2-exporter/internal/cmd.BuildTime=$(BUILD_TIME) -X github.com/lay-g/winpower-g2-exporter/internal/cmd.GitCommit=$(GIT_COMMIT) -X github.com/lay-g/winpower-g2-exporter/internal/cmd.ApplicationVersion=$(DISPLAY_VERSION)"
+LDFLAGS=-ldflags "-X main.version=$(VERSION) -X main.buildTime=$(BUILD_TIME) -X main.commitID=$(GIT_COMMIT)"
 
 # 目录
 BUILD_DIR=build
@@ -40,7 +40,7 @@ help: ## 显示此帮助信息
 build: ## 构建当前平台的二进制文件
 	@echo "构建 $(BINARY_NAME)..."
 	@mkdir -p $(BUILD_DIR)
-	$(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/exporter
+	$(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/winpower-g2-exporter
 	@echo "构建完成: $(BUILD_DIR)/$(BINARY_NAME)"
 
 build-tools: ## 构建工具（包括配置迁移工具）
@@ -58,8 +58,7 @@ build-all-tools: ## 构建主程序和所有工具
 build-linux: ## 构建 Linux AMD64 二进制文件
 	@echo "构建 $(BINARY_NAME) for Linux AMD64..."
 	@mkdir -p $(BUILD_DIR)/linux-amd64
-	GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/linux-amd64/$(BINARY_NAME) ./cmd/exporter
-	GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/linux-amd64/$(MIGRATION_TOOL) ./cmd/config-migrate
+	GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/linux-amd64/$(BINARY_NAME) ./cmd/winpower-g2-exporter
 	@echo "构建完成: $(BUILD_DIR)/linux-amd64/"
 
 build-all: ## 构建所有支持平台的二进制文件
@@ -67,24 +66,19 @@ build-all: ## 构建所有支持平台的二进制文件
 	@mkdir -p $(DIST_DIR)
 
 	# Linux AMD64
-	GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/$(BINARY_NAME)-linux-amd64 ./cmd/exporter
-	GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/$(MIGRATION_TOOL)-linux-amd64 ./cmd/config-migrate
+	GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/$(BINARY_NAME)-linux-amd64 ./cmd/winpower-g2-exporter
 
 	# Linux ARM64
-	GOOS=linux GOARCH=arm64 $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/$(BINARY_NAME)-linux-arm64 ./cmd/exporter
-	GOOS=linux GOARCH=arm64 $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/$(MIGRATION_TOOL)-linux-arm64 ./cmd/config-migrate
+	GOOS=linux GOARCH=arm64 $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/$(BINARY_NAME)-linux-arm64 ./cmd/winpower-g2-exporter
 
 	# Darwin AMD64
-	GOOS=darwin GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/$(BINARY_NAME)-darwin-amd64 ./cmd/exporter
-	GOOS=darwin GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/$(MIGRATION_TOOL)-darwin-amd64 ./cmd/config-migrate
+	GOOS=darwin GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/$(BINARY_NAME)-darwin-amd64 ./cmd/winpower-g2-exporter
 
 	# Darwin ARM64
-	GOOS=darwin GOARCH=arm64 $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/$(BINARY_NAME)-darwin-arm64 ./cmd/exporter
-	GOOS=darwin GOARCH=arm64 $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/$(MIGRATION_TOOL)-darwin-arm64 ./cmd/config-migrate
+	GOOS=darwin GOARCH=arm64 $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/$(BINARY_NAME)-darwin-arm64 ./cmd/winpower-g2-exporter
 
 	# Windows AMD64
-	GOOS=windows GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/$(BINARY_NAME)-windows-amd64.exe ./cmd/exporter
-	GOOS=windows GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/$(MIGRATION_TOOL)-windows-amd64.exe ./cmd/config-migrate
+	GOOS=windows GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/$(BINARY_NAME)-windows-amd64.exe ./cmd/winpower-g2-exporter
 
 	@echo "构建完成，文件位于 $(DIST_DIR)/"
 	@ls -la $(DIST_DIR)/
