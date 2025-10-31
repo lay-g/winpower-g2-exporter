@@ -56,4 +56,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:9090/health || exit 1
 
 # 启动命令
-CMD ["./winpower-g2-exporter"]
+CMD ["./winpower-g2-exporter", "serve"]
