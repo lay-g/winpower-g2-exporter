@@ -69,7 +69,7 @@ func ExampleConfig() {
 	}
 
 	// Output:
-	// Default port: 8080
+	// Default port: 9090
 	// Default mode: release
 	// Configuration is valid
 }

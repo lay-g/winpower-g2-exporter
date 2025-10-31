@@ -5,7 +5,7 @@ import "time"
 // setDefaults 设置默认配置值
 func (l *Loader) setDefaults() {
 	// Server 默认配置
-	l.viper.SetDefault("server.port", 8080)
+	l.viper.SetDefault("server.port", 9090)
 	l.viper.SetDefault("server.host", "0.0.0.0")
 	l.viper.SetDefault("server.mode", "release")
 	l.viper.SetDefault("server.read_timeout", 10*time.Second)

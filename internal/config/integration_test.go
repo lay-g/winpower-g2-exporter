@@ -43,7 +43,7 @@ func TestIntegration_LoadPartialConfig(t *testing.T) {
 	require.NotNil(t, cfg)
 
 	// Verify partial values override defaults
-	assert.Equal(t, 8080, cfg.Server.Port)
+	assert.Equal(t, 9090, cfg.Server.Port)
 	assert.Equal(t, "127.0.0.1", cfg.Server.Host)
 	assert.Equal(t, "debug", cfg.Server.Mode)
 
@@ -312,7 +312,7 @@ func TestIntegration_MalformedYAML(t *testing.T) {
 
 	malformedYAML := `
 server:
-  port: 8080
+  port: 9090
   invalid: [unclosed array
 `
 	err := os.WriteFile(configPath, []byte(malformedYAML), 0644)

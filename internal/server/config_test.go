@@ -8,8 +8,8 @@ import (
 func TestDefaultConfig(t *testing.T) {
 	cfg := DefaultConfig()
 
-	if cfg.Port != 8080 {
-		t.Errorf("DefaultConfig().Port = %d, want 8080", cfg.Port)
+	if cfg.Port != 9090 {
+		t.Errorf("DefaultConfig().Port = %d, want 9090", cfg.Port)
 	}
 	if cfg.Host != "0.0.0.0" {
 		t.Errorf("DefaultConfig().Host = %s, want 0.0.0.0", cfg.Host)
