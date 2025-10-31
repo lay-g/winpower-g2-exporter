@@ -5,6 +5,15 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.2] - 2025-10-31
+
+### 修复
+- 修复 Docker 容器启动命令，使用正确的 server 子命令
+- 改进发布流程，确保在打包前清理构建产物
+
+### 改进
+- 优化 Makefile 中的 release 目标依赖关系
+
 ## [0.1.1] - 2025-10-31
 
 ### 修复
