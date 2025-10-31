@@ -24,7 +24,7 @@ GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
 GOMOD=$(GOCMD) mod
 
-.PHONY: help build build-linux build-all build-tools clean test test-coverage test-integration test-all fmt lint deps update-deps dev docker-build docker-clean
+.PHONY: help build build-linux build-all build-tools clean test test-coverage test-integration test-all fmt lint deps update-deps dev docker-build docker-clean release tag
 
 # 默认目标
 .DEFAULT_GOAL := help
