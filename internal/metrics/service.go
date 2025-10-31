@@ -12,9 +12,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.uber.org/zap"
 
 	"github.com/lay-g/winpower-g2-exporter/internal/collector"
+	"github.com/lay-g/winpower-g2-exporter/internal/pkgs/log"
 )
 
 // NewMetricsService creates a new MetricsService instance
@@ -28,7 +28,7 @@ import (
 //   - error: Error if initialization fails
 func NewMetricsService(
 	coll collector.CollectorInterface,
-	logger *zap.Logger,
+	logger log.Logger,
 	config *MetricsConfig,
 ) (*MetricsService, error) {
 	// Validate inputs
@@ -64,10 +64,10 @@ func NewMetricsService(
 	m.registerMetrics()
 
 	logger.Info("Metrics service initialized",
-		zap.String("namespace", config.Namespace),
-		zap.String("subsystem", config.Subsystem),
-		zap.String("winpower_host", config.WinPowerHost),
-		zap.Bool("memory_metrics_enabled", config.EnableMemoryMetrics),
+		log.String("namespace", config.Namespace),
+		log.String("subsystem", config.Subsystem),
+		log.String("winpower_host", config.WinPowerHost),
+		log.Bool("memory_metrics_enabled", config.EnableMemoryMetrics),
 	)
 
 	return m, nil
@@ -83,8 +83,8 @@ func (m *MetricsService) HandleMetrics(c *gin.Context) {
 
 	// Log request
 	m.logger.Debug("Handling /metrics request",
-		zap.String("remote_addr", c.ClientIP()),
-		zap.String("user_agent", c.Request.UserAgent()),
+		log.String("remote_addr", c.ClientIP()),
+		log.String("user_agent", c.Request.UserAgent()),
 	)
 
 	// Trigger data collection
@@ -92,8 +92,8 @@ func (m *MetricsService) HandleMetrics(c *gin.Context) {
 	if err != nil {
 		m.handleCollectionError(err)
 		m.logger.Error("Failed to collect device data",
-			zap.Error(err),
-			zap.Duration("elapsed", time.Since(startTime)),
+			log.Err(err),
+			log.Duration("elapsed", time.Since(startTime)),
 		)
 		c.String(http.StatusInternalServerError, "Failed to collect metrics: %v", err)
 		return
@@ -102,8 +102,8 @@ func (m *MetricsService) HandleMetrics(c *gin.Context) {
 	// Update metrics based on collection result
 	if err := m.updateMetrics(collectionResult); err != nil {
 		m.logger.Error("Failed to update metrics",
-			zap.Error(err),
-			zap.Duration("elapsed", time.Since(startTime)),
+			log.Err(err),
+			log.Duration("elapsed", time.Since(startTime)),
 		)
 		// Don't return error - still serve existing metrics
 	}
@@ -113,7 +113,7 @@ func (m *MetricsService) HandleMetrics(c *gin.Context) {
 
 	// Serve metrics in Prometheus format
 	handler := promhttp.HandlerFor(m.registry, promhttp.HandlerOpts{
-		ErrorLog:      &zapLogger{logger: m.logger},
+		ErrorLog:      &promhttpLogger{logger: m.logger},
 		ErrorHandling: promhttp.ContinueOnError,
 	})
 	handler.ServeHTTP(c.Writer, c.Request)
@@ -123,9 +123,9 @@ func (m *MetricsService) HandleMetrics(c *gin.Context) {
 	m.requestDuration.WithLabelValues().Observe(duration)
 
 	m.logger.Debug("Metrics request completed",
-		zap.Duration("duration", time.Since(startTime)),
-		zap.Int("device_count", collectionResult.DeviceCount),
-		zap.Bool("success", collectionResult.Success),
+		log.Duration("duration", time.Since(startTime)),
+		log.Int("device_count", collectionResult.DeviceCount),
+		log.Bool("success", collectionResult.Success),
 	)
 }
 
@@ -155,8 +155,8 @@ func (m *MetricsService) updateMetrics(result *collector.CollectionResult) error
 	for deviceID, deviceInfo := range result.Devices {
 		if err := m.updateDeviceMetrics(deviceID, deviceInfo); err != nil {
 			m.logger.Warn("Failed to update device metrics",
-				zap.String("device_id", deviceID),
-				zap.Error(err),
+				log.String("device_id", deviceID),
+				log.Err(err),
 			)
 			// Continue with other devices
 			continue
@@ -184,8 +184,8 @@ func (m *MetricsService) updateDeviceMetrics(deviceID string, info *collector.De
 		)
 		m.deviceMetrics[deviceID] = dm
 		m.logger.Info("Created metrics for new device",
-			zap.String("device_id", deviceID),
-			zap.String("device_name", info.DeviceName),
+			log.String("device_id", deviceID),
+			log.String("device_name", info.DeviceName),
 		)
 	}
 
@@ -364,11 +364,11 @@ func encodeTestStatus(testStatus string) float64 {
 	}
 }
 
-// zapLogger wraps zap.Logger to implement promhttp.Logger interface
-type zapLogger struct {
-	logger *zap.Logger
+// promhttpLogger wraps log.Logger to implement promhttp.Logger interface
+type promhttpLogger struct {
+	logger log.Logger
 }
 
-func (l *zapLogger) Println(v ...interface{}) {
+func (l *promhttpLogger) Println(v ...interface{}) {
 	l.logger.Error(fmt.Sprint(v...))
 }

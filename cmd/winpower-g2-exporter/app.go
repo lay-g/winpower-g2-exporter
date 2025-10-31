@@ -13,7 +13,6 @@ import (
 	"github.com/lay-g/winpower-g2-exporter/internal/server"
 	"github.com/lay-g/winpower-g2-exporter/internal/storage"
 	"github.com/lay-g/winpower-g2-exporter/internal/winpower"
-	"go.uber.org/zap"
 )
 
 // App 应用程序结构体，封装所有模块
@@ -73,26 +72,15 @@ func initializeApp(ctx context.Context, cfg *config.Config, logger log.Logger) (
 		EnableMemoryMetrics: true,
 	}
 
-	// 获取底层 zap logger（metrics 需要 *zap.Logger）
-	var zapLogger interface{} = logger
-	type zapLoggerGetter interface {
-		ZapLogger() interface{}
-	}
-	if zl, ok := zapLogger.(zapLoggerGetter); ok {
-		zapLogger = zl.ZapLogger()
-	}
-
 	metricsService, err := metrics.NewMetricsService(
 		collectorService,
-		zapLogger.(*zap.Logger),
+		logger,
 		metricsConfig,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("初始化指标模块失败: %w", err)
 	}
-	logger.Info("指标模块初始化完成")
-
-	// 6. 初始化健康检查服务
+	logger.Info("指标模块初始化完成") // 6. 初始化健康检查服务
 	healthService := NewHealthService(collectorService, logger)
 	logger.Info("健康检查服务初始化完成")
 

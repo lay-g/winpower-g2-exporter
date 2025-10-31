@@ -10,16 +10,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 
 	"github.com/lay-g/winpower-g2-exporter/internal/collector"
 	"github.com/lay-g/winpower-g2-exporter/internal/metrics"
 	"github.com/lay-g/winpower-g2-exporter/internal/metrics/mocks"
+	"github.com/lay-g/winpower-g2-exporter/internal/pkgs/log"
 )
 
 func TestMetricsIntegration(t *testing.T) {
 	// Setup
-	logger := zap.NewNop()
+	logger := log.NewTestLogger()
 	mockCollector := mocks.NewMockCollectorWithDevices()
 
 	// Create metrics service
@@ -57,7 +57,7 @@ func TestMetricsIntegration(t *testing.T) {
 
 func TestMetricsIntegration_CollectionFailure(t *testing.T) {
 	// Setup
-	logger := zap.NewNop()
+	logger := log.NewTestLogger()
 
 	// Create mock collector that returns error
 	mockCollector := &mocks.MockCollector{
@@ -91,7 +91,7 @@ func TestMetricsIntegration_CollectionFailure(t *testing.T) {
 
 func TestMetricsIntegration_MultipleRequests(t *testing.T) {
 	// Setup
-	logger := zap.NewNop()
+	logger := log.NewTestLogger()
 	mockCollector := mocks.NewMockCollectorWithDevices()
 
 	// Create metrics service
@@ -120,7 +120,7 @@ func TestMetricsIntegration_MultipleRequests(t *testing.T) {
 
 func TestMetricsIntegration_DynamicDevices(t *testing.T) {
 	// Setup
-	logger := zap.NewNop()
+	logger := log.NewTestLogger()
 
 	deviceCount := 1
 	mockCollector := &mocks.MockCollector{

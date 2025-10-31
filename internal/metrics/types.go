@@ -4,16 +4,16 @@ import (
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 
 	"github.com/lay-g/winpower-g2-exporter/internal/collector"
+	"github.com/lay-g/winpower-g2-exporter/internal/pkgs/log"
 )
 
 // MetricsService manages Prometheus metrics and provides HTTP handler for /metrics endpoint
 type MetricsService struct {
 	registry     *prometheus.Registry
 	collector    collector.CollectorInterface
-	logger       *zap.Logger
+	logger       log.Logger
 	winpowerHost string // Configuration value for WinPower host label
 
 	// Exporter self-monitoring metrics
