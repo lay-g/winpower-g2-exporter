@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"runtime"
@@ -99,7 +100,7 @@ func (m *MetricsService) HandleMetrics(c *gin.Context) {
 	}
 
 	// Update metrics based on collection result
-	if err := m.updateMetrics(c.Request.Context(), collectionResult); err != nil {
+	if err := m.updateMetrics(collectionResult); err != nil {
 		m.logger.Error("Failed to update metrics",
 			zap.Error(err),
 			zap.Duration("elapsed", time.Since(startTime)),
@@ -129,7 +130,7 @@ func (m *MetricsService) HandleMetrics(c *gin.Context) {
 }
 
 // updateMetrics updates all metrics based on the collection result
-func (m *MetricsService) updateMetrics(ctx context.Context, result *collector.CollectionResult) error {
+func (m *MetricsService) updateMetrics(result *collector.CollectionResult) error {
 	if result == nil {
 		return ErrInvalidCollectionResult
 	}
@@ -275,10 +276,10 @@ func (m *MetricsService) handleCollectionError(err error) {
 	errorType := "unknown"
 	if err != nil {
 		// Classify error by type using type switch
-		switch err {
-		case context.DeadlineExceeded:
+		switch {
+		case errors.Is(err, context.DeadlineExceeded):
 			errorType = "timeout"
-		case context.Canceled:
+		case errors.Is(err, context.Canceled):
 			errorType = "cancelled"
 		default:
 			errorType = "collection_failed"
