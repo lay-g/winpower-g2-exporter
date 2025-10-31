@@ -34,7 +34,7 @@ type Config struct {
 // DefaultConfig returns the default server configuration
 func DefaultConfig() *Config {
 	return &Config{
-		Port:            8080,
+		Port:            9090,
 		Host:            "0.0.0.0",
 		Mode:            "release",
 		ReadTimeout:     10 * time.Second,

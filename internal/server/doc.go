@@ -20,7 +20,7 @@
 // 使用示例：
 //
 //	config := server.DefaultConfig()
-//	config.Port = 8080
+//	config.Port = 9090
 //	config.EnablePprof = true
 //
 //	srv := server.NewHTTPServer(

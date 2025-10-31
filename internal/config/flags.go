@@ -13,7 +13,7 @@ func (l *Loader) bindFlags() error {
 	flags := pflag.NewFlagSet("winpower-exporter", pflag.ContinueOnError)
 
 	// Server 配置
-	flags.Int("server.port", 8080, "HTTP server port")
+	flags.Int("server.port", 9090, "HTTP server port")
 	flags.String("server.host", "0.0.0.0", "HTTP server host")
 	flags.String("server.mode", "release", "Gin mode (debug|release|test)")
 	flags.Duration("server.read-timeout", 10*time.Second, "HTTP read timeout")
