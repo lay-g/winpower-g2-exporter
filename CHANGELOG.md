@@ -5,6 +5,12 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.8] - 2025-10-31
+
+### 重构
+- 移除 CollectDeviceData 方法中冗余的采集完成日志
+- 减少日志冗余度，简化代码流程
+
 ## [0.1.7] - 2025-10-31
 
 ### 变更
