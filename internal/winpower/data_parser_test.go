@@ -501,7 +501,7 @@ func createValidDeviceInfo() DeviceInfo {
 			AreaID:          "00000000-0000-0000-0000-000000000000",
 			IsActive:        true,
 			FirmwareVersion: "03.09",
-			CreateTime:      time.Now(),
+			CreateTime:      FlexibleTime{Time: time.Now()},
 			WarrantyStatus:  0,
 		},
 		Realtime:         createValidRealtimeData(),
