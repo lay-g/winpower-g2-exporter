@@ -90,3 +90,4 @@ translated-logs/
 
 # Storage Module test files
 internal/storage/data/test-device.txt
+data/
