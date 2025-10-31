@@ -100,6 +100,11 @@ func (l *zapLogger) Core() zapcore.Core {
 	return l.logger.Core()
 }
 
+// ZapLogger 返回底层的 zap.Logger（用于需要 *zap.Logger 的场景）
+func (l *zapLogger) ZapLogger() *zap.Logger {
+	return l.logger
+}
+
 // 全局日志器
 var (
 	globalLogger     Logger
