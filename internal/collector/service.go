@@ -65,10 +65,6 @@ func (cs *CollectorService) CollectDeviceData(ctx context.Context) (*CollectionR
 	// Process device data and trigger energy calculations
 	result := cs.processDeviceData(ctx, devices, start)
 
-	cs.logger.Info("collection completed",
-		log.Int("device_count", result.DeviceCount),
-		log.Duration("duration", result.Duration))
-
 	return result, nil
 }
 
