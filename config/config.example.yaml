@@ -1,0 +1,162 @@
+# =============================================================================
+# WinPower G2 Exporter 配置示例文件
+# =============================================================================
+#
+# 此文件展示了 WinPower G2 Exporter 的所有配置选项
+# 复制此文件为 config.yaml 并根据实际环境修改配置
+#
+# 配置加载优先级（高到低）：
+# 1. 命令行参数
+# 2. 环境变量 (WINPOWER_EXPORTER_*)
+# 3. 配置文件
+# 4. 默认值
+#
+# 环境变量示例：
+# WINPOWER_EXPORTER_SERVER_PORT=9090
+# WINPOWER_EXPORTER_WINPOWER_USERNAME=admin
+# WINPOWER_EXPORTER_WINPOWER_PASSWORD=secret
+# WINPOWER_EXPORTER_LOGGING_LEVEL=debug
+# =============================================================================
+
+# HTTP 服务器配置
+server:
+  # Prometheus 指标导出端口
+  # 默认值: 9090
+  # 环境变量: WINPOWER_EXPORTER_SERVER_PORT
+  port: 9090
+
+  # 服务器监听地址
+  # 默认值: "0.0.0.0" (监听所有接口)
+  # 环境变量: WINPOWER_EXPORTER_SERVER_HOST
+  host: "0.0.0.0"
+
+  # HTTP 读取超时时间
+  # 默认值: "30s"
+  # 环境变量: WINPOWER_EXPORTER_SERVER_READ_TIMEOUT
+  read_timeout: "30s"
+
+  # HTTP 写入超时时间
+  # 默认值: "30s"
+  # 环境变量: WINPOWER_EXPORTER_SERVER_WRITE_TIMEOUT
+  write_timeout: "30s"
+
+  # 是否启用 pprof 调试端点
+  # 启用后可通过 /debug/pprof 访问性能分析数据
+  # 默认值: false
+  # 环境变量: WINPOWER_EXPORTER_SERVER_ENABLE_PPROF
+  enable_pprof: false
+
+# WinPower 连接配置
+winpower:
+  # WinPower 服务地址
+  # 必填项，需要提供完整的 URL
+  # 示例: "https://winpower.example.com" 或 "http://192.168.1.100:8080"
+  # 环境变量: WINPOWER_EXPORTER_WINPOWER_BASE_URL
+  base_url: "https://winpower.example.com"
+
+  # WinPower 登录用户名
+  # 必填项
+  # 环境变量: WINPOWER_EXPORTER_WINPOWER_USERNAME
+  username: "admin"
+
+  # WinPower 登录密码
+  # 必填项，建议通过环境变量设置以提高安全性
+  # 环境变量: WINPOWER_EXPORTER_WINPOWER_PASSWORD
+  password: "password"
+
+  # HTTP 连接超时时间
+  # 默认值: "30s"
+  # 环境变量: WINPOWER_EXPORTER_WINPOWER_TIMEOUT
+  timeout: "30s"
+
+  # 是否跳过 SSL 证书验证
+  # 在使用自签证书的开发环境中设置为 true
+  # 生产环境建议配置有效的证书并保持为 false
+  # 默认值: false
+  # 环境变量: WINPOWER_EXPORTER_WINPOWER_SKIP_SSL_VERIFY
+  skip_ssl_verify: false
+
+  # 数据刷新阈值
+  # 当数据时间戳超过此阈值时会强制刷新
+  # 默认值: "5m"
+  # 环境变量: WINPOWER_EXPORTER_WINPOWER_REFRESH_THRESHOLD
+  refresh_threshold: "5m"
+
+# 存储配置
+storage:
+  # 数据存储目录
+  # 用于存储累计电能等持久化数据
+  # 默认值: "./data"
+  # 环境变量: WINPOWER_EXPORTER_STORAGE_DATA_DIR
+  data_dir: "./data"
+
+  # 数据文件权限（八进制格式）
+  # 默认值: 0644 (所有者读写，组和其他用户只读)
+  # 环境变量: WINPOWER_EXPORTER_STORAGE_FILE_PERMISSIONS
+  file_permissions: 0644
+
+  # 是否启用同步写入
+  # 启用后会确保数据立即写入磁盘，提高数据安全性但可能影响性能
+  # 默认值: true
+  # 环境变量: WINPOWER_EXPORTER_STORAGE_SYNC_WRITE
+  sync_write: true
+
+# 调度器配置
+scheduler:
+  # 数据采集间隔
+  # 根据设计文档固定为 5 秒，不建议修改
+  # 默认值: "5s"
+  # 环境变量: WINPOWER_EXPORTER_SCHEDULER_COLLECTION_INTERVAL
+  collection_interval: "5s"
+
+  # 优雅关闭超时时间
+  # 服务关闭时等待当前采集任务完成的超时时间
+  # 默认值: "5s"
+  # 环境变量: WINPOWER_EXPORTER_SCHEDULER_GRACEFUL_SHUTDOWN_TIMEOUT
+  graceful_shutdown_timeout: "5s"
+
+# 日志配置
+logging:
+  # 日志级别
+  # 可选值: debug, info, warn, error
+  # 默认值: "info"
+  # 环境变量: WINPOWER_EXPORTER_LOGGING_LEVEL
+  level: "info"
+
+  # 日志格式
+  # 可选值: json (JSON 格式，便于日志分析工具处理)
+  #          console (控制台友好格式，便于开发调试)
+  # 默认值: "json"
+  # 环境变量: WINPOWER_EXPORTER_LOGGING_FORMAT
+  format: "json"
+
+  # 日志输出目标
+  # 可选值: stdout, stderr, 或文件路径
+  # 默认值: "stdout"
+  # 环境变量: WINPOWER_EXPORTER_LOGGING_OUTPUT
+  output: "stdout"
+
+# =============================================================================
+# 生产环境部署建议
+# =============================================================================
+#
+# 1. 安全配置：
+#    - 使用环境变量设置敏感信息（密码、密钥等）
+#    - 在反向代理前终止 TLS，避免在内网传输中暴露明文
+#    - 配置适当的文件权限和目录访问控制
+#
+# 2. 性能优化：
+#    - 将 storage.data_dir 设置到高性能存储设备
+#    - 根据监控需求调整日志级别，生产环境建议使用 info 或 warn
+#    - 在高并发场景下考虑关闭 storage.sync_write
+#
+# 3. 监控配置：
+#    - 确保 Prometheus 抓取间隔与 scheduler.collection_interval 协调
+#    - 启用 logging.format 为 json 便于日志聚合和分析
+#    - 在调试问题时可临时启用 server.enable_pprof
+#
+# 4. 容器化部署：
+#    - 使用环境变量管理配置，便于容器编排
+#    - 将 data_dir 挂载为持久卷
+#    - 设置适当的资源限制和健康检查
+# =============================================================================
