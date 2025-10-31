@@ -24,7 +24,7 @@ GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
 GOMOD=$(GOCMD) mod
 
-.PHONY: help build build-linux build-all build-tools clean test test-coverage test-integration test-all fmt lint deps update-deps dev docker-build docker-run docker-push
+.PHONY: help build build-linux build-all build-tools clean test test-coverage test-integration test-all fmt lint deps update-deps dev docker-build docker-clean
 
 # 默认目标
 .DEFAULT_GOAL := help
@@ -143,27 +143,28 @@ dev: ## 启动开发环境
 	./$(BUILD_DIR)/$(BINARY_NAME) --log-level=debug
 
 # Docker 命令
+# GitHub Container Registry 配置
+GITHUB_REGISTRY=ghcr.io
+GITHUB_USER=lay-g
+IMAGE_NAME=$(GITHUB_REGISTRY)/$(GITHUB_USER)/$(BINARY_NAME)
+
 docker-build: ## 构建 Docker 镜像
-	@echo "构建 Docker 镜像..."
-	docker build -t $(BINARY_NAME):$(VERSION) .
-	docker tag $(BINARY_NAME):$(VERSION) $(BINARY_NAME):latest
-	@echo "Docker 镜像构建完成"
+	@echo "构建 Docker 镜像 $(DISPLAY_VERSION)..."
+	docker build -t $(IMAGE_NAME):$(VERSION) \
+		--build-arg VERSION=$(VERSION) \
+		--build-arg BUILD_TIME=$(BUILD_TIME) \
+		--build-arg GIT_COMMIT=$(GIT_COMMIT) \
+		.
+	docker tag $(IMAGE_NAME):$(VERSION) $(IMAGE_NAME):latest
+	@echo "Docker 镜像构建完成:"
+	@echo "  - $(IMAGE_NAME):$(VERSION)"
+	@echo "  - $(IMAGE_NAME):latest"
 
-docker-run: ## 运行 Docker 容器
-	@echo "运行 Docker 容器..."
-	docker run --rm -p 9090:9090 $(BINARY_NAME):latest
-
-docker-push: ## 推送 Docker 镜像到仓库
-	@echo "推送 Docker 镜像..."
-	@if [ -n "$(REGISTRY)" ]; then \
-		docker tag $(BINARY_NAME):$(VERSION) $(REGISTRY)/$(BINARY_NAME):$(VERSION); \
-		docker tag $(BINARY_NAME):latest $(REGISTRY)/$(BINARY_NAME):latest; \
-		docker push $(REGISTRY)/$(BINARY_NAME):$(VERSION); \
-		docker push $(REGISTRY)/$(BINARY_NAME):latest; \
-	else \
-		echo "请设置 REGISTRY 环境变量"; \
-		exit 1; \
-	fi
+docker-clean: ## 清理本地 Docker 镜像
+	@echo "清理本地 Docker 镜像..."
+	-docker rmi $(IMAGE_NAME):$(VERSION) 2>/dev/null || true
+	-docker rmi $(IMAGE_NAME):latest 2>/dev/null || true
+	@echo "清理完成"
 
 # 发布命令
 release: ## 创建发布版本
