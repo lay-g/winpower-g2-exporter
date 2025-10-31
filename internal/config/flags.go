@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"time"
 
@@ -65,7 +66,10 @@ func (l *Loader) bindFlags() error {
 	// Bind only the changed flags
 	flags.VisitAll(func(f *pflag.Flag) {
 		if changedFlags[f.Name] {
-			l.viper.BindPFlag(f.Name, f)
+			if err := l.viper.BindPFlag(f.Name, f); err != nil {
+				// 使用标准输出记录错误，因为此模块可能还未初始化logger
+				fmt.Fprintf(os.Stderr, "Failed to bind flag %s: %v\n", f.Name, err)
+			}
 		}
 	})
 

@@ -5,6 +5,16 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.4] - 2025-10-31
+
+### 修复
+- 修复 Makefile 中的 release 目标，移除不必要的 clean 依赖
+- 改进命令行标志绑定的错误处理，避免静默失败
+
+### 改进
+- 优化 build-all 命令的注释说明，明确不适用于 Release 场景
+- 增强配置加载的健壮性，提供更好的错误反馈
+
 ## [0.1.3] - 2025-10-31
 
 ### 修复

@@ -61,7 +61,7 @@ build-linux: ## 构建 Linux AMD64 二进制文件
 	GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/linux-amd64/$(BINARY_NAME) ./cmd/winpower-g2-exporter
 	@echo "构建完成: $(BUILD_DIR)/linux-amd64/"
 
-build-all: ## 构建所有支持平台的二进制文件
+build-all: ## 构建所有支持平台的二进制文件(不要用于Release场景)
 	@echo "构建 $(BINARY_NAME) for multiple platforms..."
 	@mkdir -p $(DIST_DIR)
 
@@ -167,7 +167,7 @@ docker-clean: ## 清理本地 Docker 镜像
 	@echo "清理完成"
 
 # 发布命令
-release: clean ## 创建发布版本
+release: ## 创建发布版本
 	@echo "创建发布版本 $(VERSION)..."
 	$(MAKE) clean
 	$(MAKE) build-all
