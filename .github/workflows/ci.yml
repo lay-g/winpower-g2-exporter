@@ -66,8 +66,9 @@ jobs:
       - name: 获取版本信息
         id: version
         run: |
-          VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "latest")
-          if [ "$VERSION" = "latest" ]; then
+          if [ -f VERSION ]; then
+            VERSION=$(cat VERSION | tr -d '\n')
+          else
             VERSION="dev-$(git rev-parse --short HEAD)"
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
