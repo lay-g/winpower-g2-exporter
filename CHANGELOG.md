@@ -5,6 +5,13 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.10] - 2025-10-31
+
+### 修复
+- 替换 Docker 健康检查中的 wget 为 curl
+- 解决容器环境中的网络请求兼容性问题
+- 确保健康检查功能在不同基础镜像中的稳定性
+
 ## [0.1.9] - 2025-10-31
 
 ### 变更
