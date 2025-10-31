@@ -167,7 +167,7 @@ docker-clean: ## 清理本地 Docker 镜像
 	@echo "清理完成"
 
 # 发布命令
-release: ## 创建发布版本
+release: clean ## 创建发布版本
 	@echo "创建发布版本 $(VERSION)..."
 	$(MAKE) clean
 	$(MAKE) build-all
