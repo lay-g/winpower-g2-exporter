@@ -1,0 +1,128 @@
+# HELP winpower_auth_status WinPower authentication status (1 = authenticated, 0 = not authenticated)
+# TYPE winpower_auth_status gauge
+winpower_auth_status{winpower_host="http://192.168.138.107:8081"} 0
+# HELP winpower_connection_status WinPower connection status (1 = connected, 0 = disconnected)
+# TYPE winpower_connection_status gauge
+winpower_connection_status{winpower_host="http://192.168.138.107:8081"} 1
+# HELP winpower_device_battery_capacity Battery capacity percentage
+# TYPE winpower_device_battery_capacity gauge
+winpower_device_battery_capacity{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",winpower_host="http://192.168.138.107:8081"} 90
+# HELP winpower_device_battery_charging Battery charging status (1 = charging, 0 = not charging)
+# TYPE winpower_device_battery_charging gauge
+winpower_device_battery_charging{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",winpower_host="http://192.168.138.107:8081"} 1
+# HELP winpower_device_battery_remain_seconds Battery remaining time in seconds
+# TYPE winpower_device_battery_remain_seconds gauge
+winpower_device_battery_remain_seconds{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",winpower_host="http://192.168.138.107:8081"} 7149
+# HELP winpower_device_battery_status Battery status code (encoded as numeric value)
+# TYPE winpower_device_battery_status gauge
+winpower_device_battery_status{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",winpower_host="http://192.168.138.107:8081"} 0
+# HELP winpower_device_battery_voltage_percent Battery voltage percentage
+# TYPE winpower_device_battery_voltage_percent gauge
+winpower_device_battery_voltage_percent{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",winpower_host="http://192.168.138.107:8081"} 81.4
+# HELP winpower_device_connected Device connection status (1 = connected, 0 = disconnected)
+# TYPE winpower_device_connected gauge
+winpower_device_connected{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",winpower_host="http://192.168.138.107:8081"} 1
+# HELP winpower_device_cumulative_energy Cumulative energy consumption in watt-hours
+# TYPE winpower_device_cumulative_energy gauge
+winpower_device_cumulative_energy{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",winpower_host="http://192.168.138.107:8081"} 27.88
+# HELP winpower_device_input_frequency Input frequency in hertz
+# TYPE winpower_device_input_frequency gauge
+winpower_device_input_frequency{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",winpower_host="http://192.168.138.107:8081"} 49.9
+# HELP winpower_device_input_voltage Input voltage in volts
+# TYPE winpower_device_input_voltage gauge
+winpower_device_input_voltage{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",winpower_host="http://192.168.138.107:8081"} 239.3
+# HELP winpower_device_last_update_timestamp Unix timestamp of the last device update
+# TYPE winpower_device_last_update_timestamp gauge
+winpower_device_last_update_timestamp{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",winpower_host="http://192.168.138.107:8081"} 1.76189682e+09
+# HELP winpower_device_load_percent Device load percentage
+# TYPE winpower_device_load_percent gauge
+winpower_device_load_percent{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",winpower_host="http://192.168.138.107:8081"} 6
+# HELP winpower_device_load_total_va Total load apparent power in volt-amperes
+# TYPE winpower_device_load_total_va gauge
+winpower_device_load_total_va{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",winpower_host="http://192.168.138.107:8081"} 190
+# HELP winpower_device_load_total_watts Total load active power in watts (core metric for energy calculation)
+# TYPE winpower_device_load_total_watts gauge
+winpower_device_load_total_watts{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",winpower_host="http://192.168.138.107:8081"} 190
+# HELP winpower_device_load_va_phase1 Phase 1 apparent power in volt-amperes
+# TYPE winpower_device_load_va_phase1 gauge
+winpower_device_load_va_phase1{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",winpower_host="http://192.168.138.107:8081"} 190
+# HELP winpower_device_load_watts_phase1 Phase 1 active power in watts
+# TYPE winpower_device_load_watts_phase1 gauge
+winpower_device_load_watts_phase1{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",winpower_host="http://192.168.138.107:8081"} 190
+# HELP winpower_device_output_current Output current in amperes
+# TYPE winpower_device_output_current gauge
+winpower_device_output_current{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",winpower_host="http://192.168.138.107:8081"} 1
+# HELP winpower_device_output_frequency Output frequency in hertz
+# TYPE winpower_device_output_frequency gauge
+winpower_device_output_frequency{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",winpower_host="http://192.168.138.107:8081"} 49.9
+# HELP winpower_device_output_voltage Output voltage in volts
+# TYPE winpower_device_output_voltage gauge
+winpower_device_output_voltage{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",winpower_host="http://192.168.138.107:8081"} 219.8
+# HELP winpower_device_output_voltage_type Output voltage type (encoded as numeric value)
+# TYPE winpower_device_output_voltage_type gauge
+winpower_device_output_voltage_type{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",winpower_host="http://192.168.138.107:8081"} 0
+# HELP winpower_device_ups_fault_code UPS fault code (with fault_code label for aggregation)
+# TYPE winpower_device_ups_fault_code gauge
+winpower_device_ups_fault_code{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",fault_code="none",winpower_host="http://192.168.138.107:8081"} 0
+# HELP winpower_device_ups_mode UPS operating mode (encoded as numeric value)
+# TYPE winpower_device_ups_mode gauge
+winpower_device_ups_mode{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",winpower_host="http://192.168.138.107:8081"} 0
+# HELP winpower_device_ups_status UPS status code (encoded as numeric value)
+# TYPE winpower_device_ups_status gauge
+winpower_device_ups_status{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",winpower_host="http://192.168.138.107:8081"} 0
+# HELP winpower_device_ups_temperature UPS temperature in Celsius
+# TYPE winpower_device_ups_temperature gauge
+winpower_device_ups_temperature{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",winpower_host="http://192.168.138.107:8081"} 26
+# HELP winpower_device_ups_test_status UPS test status code (encoded as numeric value)
+# TYPE winpower_device_ups_test_status gauge
+winpower_device_ups_test_status{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",winpower_host="http://192.168.138.107:8081"} 0
+# HELP winpower_exporter_collection_duration_seconds Data collection and calculation duration in seconds
+# TYPE winpower_exporter_collection_duration_seconds histogram
+winpower_exporter_collection_duration_seconds_bucket{winpower_host="http://192.168.138.107:8081",le="0.05"} 0
+winpower_exporter_collection_duration_seconds_bucket{winpower_host="http://192.168.138.107:8081",le="0.1"} 10
+winpower_exporter_collection_duration_seconds_bucket{winpower_host="http://192.168.138.107:8081",le="0.2"} 10
+winpower_exporter_collection_duration_seconds_bucket{winpower_host="http://192.168.138.107:8081",le="0.5"} 10
+winpower_exporter_collection_duration_seconds_bucket{winpower_host="http://192.168.138.107:8081",le="1"} 10
+winpower_exporter_collection_duration_seconds_bucket{winpower_host="http://192.168.138.107:8081",le="2"} 10
+winpower_exporter_collection_duration_seconds_bucket{winpower_host="http://192.168.138.107:8081",le="5"} 10
+winpower_exporter_collection_duration_seconds_bucket{winpower_host="http://192.168.138.107:8081",le="+Inf"} 10
+winpower_exporter_collection_duration_seconds_sum{winpower_host="http://192.168.138.107:8081"} 0.732444168
+winpower_exporter_collection_duration_seconds_count{winpower_host="http://192.168.138.107:8081"} 10
+# HELP winpower_exporter_device_count Number of discovered devices
+# TYPE winpower_exporter_device_count gauge
+winpower_exporter_device_count{winpower_host="http://192.168.138.107:8081"} 1
+# HELP winpower_exporter_last_collection_time_seconds Unix timestamp of the last successful collection
+# TYPE winpower_exporter_last_collection_time_seconds gauge
+winpower_exporter_last_collection_time_seconds{winpower_host="http://192.168.138.107:8081"} 1.76189682e+09
+# HELP winpower_exporter_memory_bytes Memory usage in bytes
+# TYPE winpower_exporter_memory_bytes gauge
+winpower_exporter_memory_bytes{type="alloc",winpower_host="http://192.168.138.107:8081"} 3.40372e+06
+winpower_exporter_memory_bytes{type="heap",winpower_host="http://192.168.138.107:8081"} 3.40372e+06
+winpower_exporter_memory_bytes{type="sys",winpower_host="http://192.168.138.107:8081"} 1.4567688e+07
+# HELP winpower_exporter_request_duration_seconds HTTP request duration in seconds
+# TYPE winpower_exporter_request_duration_seconds histogram
+winpower_exporter_request_duration_seconds_bucket{winpower_host="http://192.168.138.107:8081",le="0.05"} 0
+winpower_exporter_request_duration_seconds_bucket{winpower_host="http://192.168.138.107:8081",le="0.1"} 9
+winpower_exporter_request_duration_seconds_bucket{winpower_host="http://192.168.138.107:8081",le="0.2"} 9
+winpower_exporter_request_duration_seconds_bucket{winpower_host="http://192.168.138.107:8081",le="0.5"} 9
+winpower_exporter_request_duration_seconds_bucket{winpower_host="http://192.168.138.107:8081",le="1"} 9
+winpower_exporter_request_duration_seconds_bucket{winpower_host="http://192.168.138.107:8081",le="2"} 9
+winpower_exporter_request_duration_seconds_bucket{winpower_host="http://192.168.138.107:8081",le="5"} 9
+winpower_exporter_request_duration_seconds_bucket{winpower_host="http://192.168.138.107:8081",le="+Inf"} 9
+winpower_exporter_request_duration_seconds_sum{winpower_host="http://192.168.138.107:8081"} 0.6800152499999998
+winpower_exporter_request_duration_seconds_count{winpower_host="http://192.168.138.107:8081"} 9
+# HELP winpower_exporter_requests_total Total number of HTTP requests to the /metrics endpoint
+# TYPE winpower_exporter_requests_total counter
+winpower_exporter_requests_total{winpower_host="http://192.168.138.107:8081"} 10
+# HELP winpower_exporter_up Whether the WinPower exporter is running (1 = up, 0 = down)
+# TYPE winpower_exporter_up gauge
+winpower_exporter_up{winpower_host="http://192.168.138.107:8081"} 1
+# HELP winpower_power_watts Instantaneous power in watts (same as load_total_watts)
+# TYPE winpower_power_watts gauge
+winpower_power_watts{device_id="e156e6cb-41cb-4b35-b0dd-869929186a5c",device_name="C3K",device_type="1",winpower_host="http://192.168.138.107:8081"} 190
+# HELP winpower_token_expiry_seconds Remaining time until token expiry in seconds
+# TYPE winpower_token_expiry_seconds gauge
+winpower_token_expiry_seconds{winpower_host="http://192.168.138.107:8081"} 0
+# HELP winpower_token_valid Whether the current token is valid (1 = valid, 0 = invalid)
+# TYPE winpower_token_valid gauge
+winpower_token_valid{winpower_host="http://192.168.138.107:8081"} 0

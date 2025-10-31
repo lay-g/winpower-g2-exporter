@@ -98,6 +98,9 @@ func (cs *CollectorService) processDeviceData(
 		DeviceCount:    len(devices),
 		Devices:        make(map[string]*DeviceCollectionInfo),
 		CollectionTime: time.Now(),
+		// Collect token information
+		TokenValid:     cs.winpowerClient.IsTokenValid(),
+		TokenExpiresAt: cs.winpowerClient.GetTokenExpiresAt(),
 	}
 
 	for _, device := range devices {
