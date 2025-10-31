@@ -1,5 +1,7 @@
 # WinPower G2 Exporter
 
+[![CI/CD Pipeline](https://github.com/lay-g/winpower-g2-exporter/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/lay-g/winpower-g2-exporter/actions/workflows/ci.yml)
+
 一个用于采集 WinPower G2 设备数据、计算能耗并以 Prometheus 指标格式导出的 Go 应用程序。
 
 ## 概述
