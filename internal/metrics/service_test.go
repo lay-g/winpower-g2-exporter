@@ -143,7 +143,7 @@ func TestMetricsService_updateMetrics(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
-			err := service.updateMetrics(ctx, tt.result)
+			err := service.updateMetrics(tt.result)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -367,7 +367,7 @@ func TestMetricsService_concurrentAccess(t *testing.T) {
 	done := make(chan bool)
 	for i := 0; i < 10; i++ {
 		go func() {
-			err := service.updateMetrics(ctx, result)
+			err := service.updateMetrics(result)
 			assert.NoError(t, err)
 			done <- true
 		}()
