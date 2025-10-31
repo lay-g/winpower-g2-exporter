@@ -2,8 +2,58 @@ package winpower
 
 import (
 	"context"
+	"encoding/json"
+	"strings"
 	"time"
 )
+
+// FlexibleTime is a custom time type that can parse multiple time formats.
+// It handles WinPower's time format which doesn't include timezone information.
+type FlexibleTime struct {
+	time.Time
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+// It attempts to parse time in multiple formats:
+// 1. RFC3339 with timezone (e.g., "2006-01-02T15:04:05Z07:00")
+// 2. RFC3339 without timezone (e.g., "2006-01-02T15:04:05.999999")
+func (ft *FlexibleTime) UnmarshalJSON(data []byte) error {
+	// Remove quotes from JSON string
+	s := strings.Trim(string(data), "\"")
+	if s == "null" || s == "" {
+		return nil
+	}
+
+	// Try parsing with RFC3339 format (with timezone)
+	t, err := time.Parse(time.RFC3339, s)
+	if err == nil {
+		ft.Time = t
+		return nil
+	}
+
+	// Try parsing without timezone (WinPower format)
+	// Format: "2006-01-02T15:04:05.999999"
+	t, err = time.Parse("2006-01-02T15:04:05.999999", s)
+	if err == nil {
+		ft.Time = t
+		return nil
+	}
+
+	// Try parsing without microseconds
+	// Format: "2006-01-02T15:04:05"
+	t, err = time.Parse("2006-01-02T15:04:05", s)
+	if err == nil {
+		ft.Time = t
+		return nil
+	}
+
+	return err
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+func (ft FlexibleTime) MarshalJSON() ([]byte, error) {
+	return json.Marshal(ft.Format(time.RFC3339))
+}
 
 // WinPowerClient defines the interface for WinPower G2 data collection.
 type WinPowerClient interface {
@@ -98,19 +148,19 @@ type DeviceInfo struct {
 
 // AssetDevice represents device basic information.
 type AssetDevice struct {
-	ID              string    `json:"id"`
-	DeviceType      int       `json:"deviceType"`
-	Model           string    `json:"model"`
-	Alias           string    `json:"alias"`
-	ProtocolID      int       `json:"protocolId"`
-	ConnectType     int       `json:"connectType"`
-	ComPort         string    `json:"comPort"`
-	BaudRate        int       `json:"baudRate"`
-	AreaID          string    `json:"areaId"`
-	IsActive        bool      `json:"isActive"`
-	FirmwareVersion string    `json:"firmwareVersion"`
-	CreateTime      time.Time `json:"createTime"`
-	WarrantyStatus  int       `json:"warrantyStatus"`
+	ID              string       `json:"id"`
+	DeviceType      int          `json:"deviceType"`
+	Model           string       `json:"model"`
+	Alias           string       `json:"alias"`
+	ProtocolID      int          `json:"protocolId"`
+	ConnectType     int          `json:"connectType"`
+	ComPort         string       `json:"comPort"`
+	BaudRate        int          `json:"baudRate"`
+	AreaID          string       `json:"areaId"`
+	IsActive        bool         `json:"isActive"`
+	FirmwareVersion string       `json:"firmwareVersion"`
+	CreateTime      FlexibleTime `json:"createTime"`
+	WarrantyStatus  int          `json:"warrantyStatus"`
 }
 
 // LoginRequest represents the authentication request.
