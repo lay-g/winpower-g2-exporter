@@ -1,0 +1,13 @@
+server:
+  port: 8080
+  host: "127.0.0.1"
+  mode: "debug"
+
+winpower:
+  base_url: "https://partial.example.com"
+  username: "partial"
+  password: "partial"
+
+logging:
+  level: "debug"
+  format: "console"
