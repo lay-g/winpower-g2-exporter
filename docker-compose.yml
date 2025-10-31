@@ -1,0 +1,62 @@
+version: "3.8"
+
+services:
+  # WinPower G2 Exporter 服务
+  winpower-exporter:
+    image: winpower-g2-exporter:latest
+    container_name: winpower-g2-exporter
+    restart: unless-stopped
+
+    # 端口映射
+    ports:
+      - "9090:9090"
+
+    # 环境变量配置（推荐方式）
+    environment:
+      # WinPower 连接配置
+      - WINPOWER_EXPORTER_WINPOWER_BASE_URL=${WINPOWER_BASE_URL:-https://winpower.example.com}
+      - WINPOWER_EXPORTER_WINPOWER_USERNAME=${WINPOWER_USERNAME:-admin}
+      - WINPOWER_EXPORTER_WINPOWER_PASSWORD=${WINPOWER_PASSWORD:-password}
+      - WINPOWER_EXPORTER_WINPOWER_SKIP_SSL_VERIFY=${WINPOWER_SKIP_SSL_VERIFY:-false}
+      - WINPOWER_EXPORTER_WINPOWER_TIMEOUT=${WINPOWER_TIMEOUT:-30s}
+
+      # 服务器配置
+      - WINPOWER_EXPORTER_SERVER_PORT=9090
+      - WINPOWER_EXPORTER_SERVER_HOST=0.0.0.0
+      - WINPOWER_EXPORTER_SERVER_ENABLE_PPROF=${ENABLE_PPROF:-false}
+
+      # 存储配置
+      - WINPOWER_EXPORTER_STORAGE_DATA_DIR=/app/data
+      - WINPOWER_EXPORTER_STORAGE_SYNC_WRITE=true
+
+      # 调度器配置
+      - WINPOWER_EXPORTER_SCHEDULER_COLLECTION_INTERVAL=5s
+
+      # 日志配置
+      - WINPOWER_EXPORTER_LOGGING_LEVEL=${LOG_LEVEL:-info}
+      - WINPOWER_EXPORTER_LOGGING_FORMAT=console
+      - WINPOWER_EXPORTER_LOGGING_OUTPUT=stdout
+
+    # 卷挂载
+    volumes:
+      # 持久化数据目录（累计电能数据）
+      - ./data:/app/data
+      # 可选：挂载配置文件（如果不使用环境变量）
+      # - ./config/config.yaml:/app/config/config.yaml:ro
+
+    # 健康检查
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:9090/health",
+        ]
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+
