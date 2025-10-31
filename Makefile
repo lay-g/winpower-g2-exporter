@@ -173,10 +173,23 @@ release: ## 创建发布版本
 	$(MAKE) build-all
 	@echo "创建发布包..."
 	@mkdir -p $(DIST_DIR)/release
-	@cd $(DIST_DIR) && for file in $(BINARY_NAME)-*; do \
-		tar -czf release/$${file%.exe}.tar.gz $$file; \
+	@mkdir -p $(DIST_DIR)/tmp
+	@echo "打包发布文件..."
+	@for file in $(DIST_DIR)/$(BINARY_NAME)-*; do \
+		platform=$$(basename $$file | sed 's/$(BINARY_NAME)-//'); \
+		echo "  打包 $$platform ..."; \
+		tmpdir=$(DIST_DIR)/tmp/$(BINARY_NAME)-$$platform; \
+		mkdir -p $$tmpdir; \
+		cp $$file $$tmpdir/; \
+		cp LICENSE $$tmpdir/ 2>/dev/null || echo "警告: LICENSE 文件不存在"; \
+		cp README.md $$tmpdir/ 2>/dev/null || echo "警告: README.md 文件不存在"; \
+		cp config/config.example.yaml $$tmpdir/ 2>/dev/null || echo "警告: config.example.yaml 文件不存在"; \
+		cd $(DIST_DIR)/tmp && tar -czf ../release/$(BINARY_NAME)-$$platform.tar.gz $(BINARY_NAME)-$$platform/; \
+		cd ../..; \
 	done
+	@rm -rf $(DIST_DIR)/tmp
 	@echo "发布包创建完成: $(DIST_DIR)/release/"
+	@ls -lh $(DIST_DIR)/release/
 
 tag: ## 创建 Git 标签
 	@echo "创建 Git 标签 $(VERSION)..."
