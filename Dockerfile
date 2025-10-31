@@ -24,7 +24,7 @@ RUN make build-linux && \
 FROM alpine:latest
 
 # 安装必要工具
-RUN apk --no-cache add ca-certificates tzdata wget
+RUN apk --no-cache add ca-certificates tzdata curl
 
 # 设置工作目录
 WORKDIR /app
@@ -43,7 +43,7 @@ EXPOSE 9090
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:9090/health || exit 1
+    CMD curl -f http://localhost:9090/health || exit 1
 
 # 启动命令
 CMD ["./winpower-g2-exporter", "server"]
