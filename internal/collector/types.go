@@ -12,6 +12,10 @@ type CollectionResult struct {
 	CollectionTime time.Time                        `json:"collection_time"`
 	Duration       time.Duration                    `json:"duration"`
 	ErrorMessage   string                           `json:"error_message,omitempty"`
+
+	// Token information
+	TokenValid     bool      `json:"token_valid"`
+	TokenExpiresAt time.Time `json:"token_expires_at"`
 }
 
 // DeviceCollectionInfo contains comprehensive information about a collected device

@@ -293,3 +293,13 @@ func (c *Client) getErrorCount() int64 {
 	defer c.mu.RUnlock()
 	return c.errorCount
 }
+
+// GetTokenExpiresAt returns the expiration time of the current token.
+func (c *Client) GetTokenExpiresAt() time.Time {
+	return c.tokenManager.GetExpiresAt()
+}
+
+// IsTokenValid checks if the current token is valid.
+func (c *Client) IsTokenValid() bool {
+	return c.tokenManager.IsValid()
+}

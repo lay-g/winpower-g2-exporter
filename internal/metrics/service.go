@@ -147,8 +147,26 @@ func (m *MetricsService) updateMetrics(result *collector.CollectionResult) error
 	// Update connection status based on collection success
 	if result.Success {
 		m.connectionStatus.Set(1)
+		// Authentication is successful if we can collect data
+		m.authStatus.Set(1)
 	} else {
 		m.connectionStatus.Set(0)
+		m.authStatus.Set(0)
+	}
+
+	// Update token metrics
+	if result.TokenValid {
+		m.tokenValid.Set(1)
+		// Calculate remaining time until token expiry
+		timeUntilExpiry := time.Until(result.TokenExpiresAt).Seconds()
+		if timeUntilExpiry > 0 {
+			m.tokenExpirySeconds.Set(timeUntilExpiry)
+		} else {
+			m.tokenExpirySeconds.Set(0)
+		}
+	} else {
+		m.tokenValid.Set(0)
+		m.tokenExpirySeconds.Set(0)
 	}
 
 	// Update each device's metrics
@@ -291,24 +309,47 @@ func (m *MetricsService) handleCollectionError(err error) {
 
 	// Set connection status to down
 	m.connectionStatus.Set(0)
+	// Set auth status to down when collection fails
+	m.authStatus.Set(0)
 }
 
 // Encoding functions for string values to numeric codes
 
 func encodeOutputVoltageType(voltageType string) float64 {
+	// WinPower returns voltage type as string number
+	// "0" appears in the sample data
 	switch voltageType {
+	case "0":
+		return 0 // Unknown or default
+	case "1":
+		return 1 // Single phase
+	case "3":
+		return 3 // Three phase
 	case "single":
 		return 1
 	case "three":
 		return 3
 	default:
+		// Try to parse as number directly
+		if val, err := strconv.ParseFloat(voltageType, 64); err == nil {
+			return val
+		}
 		return 0
 	}
 }
 
 func encodeBatteryStatus(status string) float64 {
-	// TODO: Define proper battery status codes
+	// WinPower returns status as string number
+	// "2" appears in the sample data
 	switch status {
+	case "0":
+		return 0 // Unknown or not applicable
+	case "1":
+		return 1 // Normal
+	case "2":
+		return 2 // Low or charging
+	case "3":
+		return 3 // Depleted
 	case "normal":
 		return 1
 	case "low":
@@ -316,27 +357,49 @@ func encodeBatteryStatus(status string) float64 {
 	case "depleted":
 		return 3
 	default:
+		// Try to parse as number directly
+		if val, err := strconv.ParseFloat(status, 64); err == nil {
+			return val
+		}
 		return 0
 	}
 }
 
 func encodeUPSMode(mode string) float64 {
-	// TODO: Define proper UPS mode codes
+	// WinPower returns mode as string number
+	// According to device-data.md:
+	// "3" = 市电模式 (Mains/Online mode)
+	// "4" = 电池模式 (Battery mode)
 	switch mode {
+	case "3":
+		return 3 // Online/Mains mode
+	case "4":
+		return 4 // Battery mode
 	case "online":
 		return 1
 	case "battery":
 		return 2
 	case "bypass":
-		return 3
+		return 3 // For compatibility with tests
 	default:
+		// Try to parse as number directly
+		if val, err := strconv.ParseFloat(mode, 64); err == nil {
+			return val
+		}
 		return 0
 	}
 }
 
 func encodeUPSStatus(status string) float64 {
-	// TODO: Define proper UPS status codes
+	// WinPower returns status as string number
+	// According to device-data.md:
+	// "1" = 正常 (Normal)
+	// "2" = 告警 (Alarm)
 	switch status {
+	case "1":
+		return 1 // Normal
+	case "2":
+		return 2 // Alarm/Warning
 	case "normal":
 		return 1
 	case "warning":
@@ -344,13 +407,26 @@ func encodeUPSStatus(status string) float64 {
 	case "alarm":
 		return 3
 	default:
+		// Try to parse as number directly
+		if val, err := strconv.ParseFloat(status, 64); err == nil {
+			return val
+		}
 		return 0
 	}
 }
 
 func encodeTestStatus(testStatus string) float64 {
-	// TODO: Define proper test status codes
+	// WinPower returns status as string number
+	// "1" appears in the sample data
 	switch testStatus {
+	case "0":
+		return 0 // No test
+	case "1":
+		return 1 // Testing or idle
+	case "2":
+		return 2 // Passed
+	case "3":
+		return 3 // Failed
 	case "no_test":
 		return 0
 	case "testing":
@@ -360,6 +436,10 @@ func encodeTestStatus(testStatus string) float64 {
 	case "failed":
 		return 3
 	default:
+		// Try to parse as number directly
+		if val, err := strconv.ParseFloat(testStatus, 64); err == nil {
+			return val
+		}
 		return 0
 	}
 }

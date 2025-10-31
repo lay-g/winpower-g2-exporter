@@ -24,6 +24,8 @@ type WinPowerClient interface {
 	CollectDeviceData(ctx context.Context) ([]winpower.ParsedDeviceData, error)
 	GetConnectionStatus() bool
 	GetLastCollectionTime() time.Time
+	GetTokenExpiresAt() time.Time
+	IsTokenValid() bool
 }
 
 // EnergyCalculator defines the interface for energy calculation.

@@ -25,6 +25,8 @@ type MockWinPowerClient struct {
 	CollectDeviceDataFunc     func(ctx context.Context) ([]winpower.ParsedDeviceData, error)
 	GetConnectionStatusFunc   func() bool
 	GetLastCollectionTimeFunc func() time.Time
+	GetTokenExpiresAtFunc     func() time.Time
+	IsTokenValidFunc          func() bool
 }
 
 func (m *MockWinPowerClient) CollectDeviceData(ctx context.Context) ([]winpower.ParsedDeviceData, error) {
@@ -46,6 +48,20 @@ func (m *MockWinPowerClient) GetLastCollectionTime() time.Time {
 		return m.GetLastCollectionTimeFunc()
 	}
 	return time.Now()
+}
+
+func (m *MockWinPowerClient) GetTokenExpiresAt() time.Time {
+	if m.GetTokenExpiresAtFunc != nil {
+		return m.GetTokenExpiresAtFunc()
+	}
+	return time.Now().Add(time.Hour)
+}
+
+func (m *MockWinPowerClient) IsTokenValid() bool {
+	if m.IsTokenValidFunc != nil {
+		return m.IsTokenValidFunc()
+	}
+	return true
 }
 
 // MockEnergyCalculator is a mock implementation of EnergyCalculator for testing
