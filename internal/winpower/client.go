@@ -155,13 +155,6 @@ func (c *Client) CollectDeviceData(ctx context.Context) ([]ParsedDeviceData, err
 	c.recordSuccess(len(data))
 
 	elapsedTime := time.Since(startTime)
-	c.logger.Info("device data collection completed",
-		zap.Int("device_count", len(data)),
-		zap.Duration("elapsed", elapsedTime),
-		zap.Int64("total_collections", c.getCollectionCount()),
-		zap.Int64("success_count", c.getSuccessCount()),
-		zap.Int64("error_count", c.getErrorCount()),
-	)
 
 	// Log warning if collection took too long (> 2 seconds)
 	if elapsedTime > 2*time.Second {
@@ -273,26 +266,6 @@ func (c *Client) incrementCollectionCount() {
 	c.collectionCount++
 }
 
-// getCollectionCount returns the total collection count.
-func (c *Client) getCollectionCount() int64 {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.collectionCount
-}
-
-// getSuccessCount returns the success count.
-func (c *Client) getSuccessCount() int64 {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.successCount
-}
-
-// getErrorCount returns the error count.
-func (c *Client) getErrorCount() int64 {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.errorCount
-}
 
 // GetTokenExpiresAt returns the expiration time of the current token.
 func (c *Client) GetTokenExpiresAt() time.Time {

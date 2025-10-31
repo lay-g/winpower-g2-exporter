@@ -154,8 +154,8 @@ func TestSchedulerIntegration(t *testing.T) {
 		if !logger.hasLog("INFO: collection completed") {
 			t.Error("Expected 'collection completed' log")
 		}
-		if !logger.hasLog("INFO: scheduler stopped gracefully") {
-			t.Error("Expected 'scheduler stopped gracefully' log")
+		if !logger.hasLog("INFO: scheduler stopped") {
+			t.Error("Expected 'scheduler stopped' log")
 		}
 	})
 

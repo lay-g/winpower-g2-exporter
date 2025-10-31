@@ -83,10 +83,6 @@ func (es *EnergyService) Calculate(deviceID string, power float64) (float64, err
 	duration := time.Since(start)
 	es.updateStats(true, duration)
 
-	logger.Info("Energy calculation completed",
-		log.Float64("total_energy", totalEnergy),
-		log.Duration("duration", duration))
-
 	return totalEnergy, nil
 }
 

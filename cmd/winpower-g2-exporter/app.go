@@ -36,7 +36,6 @@ func initializeApp(ctx context.Context, cfg *config.Config, logger log.Logger) (
 	if err != nil {
 		return nil, fmt.Errorf("初始化存储模块失败: %w", err)
 	}
-	logger.Info("存储模块初始化完成")
 
 	// 2. 初始化 WinPower 模块
 	// 依赖: 配置模块、日志模块
@@ -44,12 +43,10 @@ func initializeApp(ctx context.Context, cfg *config.Config, logger log.Logger) (
 	if err != nil {
 		return nil, fmt.Errorf("初始化 WinPower 模块失败: %w", err)
 	}
-	logger.Info("WinPower 模块初始化完成")
 
 	// 3. 初始化电能计算模块
 	// 依赖: 配置模块、日志模块、存储模块
 	energyService := energy.NewEnergyService(storageManager, logger)
-	logger.Info("电能计算模块初始化完成")
 
 	// 4. 初始化采集器模块
 	// 依赖: 配置模块、日志模块、WinPower 模块、电能计算模块
@@ -61,7 +58,6 @@ func initializeApp(ctx context.Context, cfg *config.Config, logger log.Logger) (
 	if err != nil {
 		return nil, fmt.Errorf("初始化采集器模块失败: %w", err)
 	}
-	logger.Info("采集器模块初始化完成")
 
 	// 5. 初始化指标模块
 	// 依赖: 配置模块、日志模块、采集器模块
@@ -80,9 +76,9 @@ func initializeApp(ctx context.Context, cfg *config.Config, logger log.Logger) (
 	if err != nil {
 		return nil, fmt.Errorf("初始化指标模块失败: %w", err)
 	}
-	logger.Info("指标模块初始化完成") // 6. 初始化健康检查服务
+
+	// 6. 初始化健康检查服务
 	healthService := NewHealthService(collectorService, logger)
-	logger.Info("健康检查服务初始化完成")
 
 	// 7. 初始化服务器模块
 	// 依赖: 配置模块、日志模块、指标模块、健康检查服务
@@ -96,7 +92,6 @@ func initializeApp(ctx context.Context, cfg *config.Config, logger log.Logger) (
 	if err != nil {
 		return nil, fmt.Errorf("初始化服务器模块失败: %w", err)
 	}
-	logger.Info("服务器模块初始化完成")
 
 	// 8. 初始化调度器模块
 	// 依赖: 配置模块、日志模块、采集器模块
@@ -108,7 +103,6 @@ func initializeApp(ctx context.Context, cfg *config.Config, logger log.Logger) (
 	if err != nil {
 		return nil, fmt.Errorf("初始化调度器模块失败: %w", err)
 	}
-	logger.Info("调度器模块初始化完成")
 
 	return &App{
 		Config:    cfg,
@@ -131,15 +125,11 @@ func (app *App) Start(ctx context.Context) error {
 			app.Logger.Error("HTTP 服务器启动失败", log.Err(err))
 		}
 	}()
-	app.Logger.Info("HTTP 服务器已启动",
-		log.Int("port", app.Config.Server.Port))
 
 	// 2. 启动调度器（非阻塞）
 	if err := app.Scheduler.Start(ctx); err != nil {
 		return fmt.Errorf("启动调度器失败: %w", err)
 	}
-	app.Logger.Info("调度器已启动",
-		log.String("interval", app.Config.Scheduler.CollectionInterval.String()))
 
 	return nil
 }
@@ -151,23 +141,17 @@ func (app *App) Shutdown(ctx context.Context) error {
 	// 按相反顺序关闭模块
 	// 1. 停止调度器
 	if app.Scheduler != nil {
-		app.Logger.Info("停止调度器...")
 		if err := app.Scheduler.Stop(ctx); err != nil {
 			errors = append(errors, fmt.Errorf("关闭调度器失败: %w", err))
 			app.Logger.Error("关闭调度器失败", log.Err(err))
-		} else {
-			app.Logger.Info("调度器已停止")
 		}
 	}
 
 	// 2. 停止服务器
 	if app.Server != nil {
-		app.Logger.Info("停止 HTTP 服务器...")
 		if err := app.Server.Stop(ctx); err != nil {
 			errors = append(errors, fmt.Errorf("关闭服务器失败: %w", err))
 			app.Logger.Error("关闭服务器失败", log.Err(err))
-		} else {
-			app.Logger.Info("HTTP 服务器已停止")
 		}
 	}
 

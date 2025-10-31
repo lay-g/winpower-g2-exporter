@@ -91,20 +91,12 @@ func NewFileStorageManager(config *Config, logger log.Logger) (StorageManager, e
 //	    log.Printf("failed to write: %v", err)
 //	}
 func (m *FileStorageManager) Write(deviceID string, data *PowerData) error {
-	m.logger.Debug("writing device data",
-		log.String("device_id", deviceID),
-		log.Int64("timestamp", data.Timestamp),
-		log.Float64("energy_wh", data.EnergyWH))
-
 	if err := m.writer.Write(deviceID, data); err != nil {
 		m.logger.Error("failed to write device data",
 			log.String("device_id", deviceID),
 			log.Err(err))
 		return err
 	}
-
-	m.logger.Info("device data written successfully",
-		log.String("device_id", deviceID))
 
 	return nil
 }

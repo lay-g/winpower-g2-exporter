@@ -59,10 +59,6 @@ func (p *DataParser) ParseResponse(response *DeviceDataResponse) ([]ParsedDevice
 		result = append(result, *parsed)
 	}
 
-	p.logger.Info("Successfully parsed device data",
-		zap.Int("total_devices", response.Total),
-		zap.Int("parsed_devices", len(result)))
-
 	return result, nil
 }
 
