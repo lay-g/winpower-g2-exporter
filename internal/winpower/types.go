@@ -135,6 +135,15 @@ type DeviceDataResponse struct {
 	Msg         string       `json:"msg"`
 }
 
+// ErrorResponse represents an error response structure from WinPower API.
+// Used when the API returns an error (e.g., authentication failure).
+// In error cases, the 'data' field is a string instead of an array.
+type ErrorResponse struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+	Data    string `json:"data"` // Error details as string
+}
+
 // DeviceInfo represents complete device information from WinPower API.
 type DeviceInfo struct {
 	AssetDevice      AssetDevice            `json:"assetDevice"`
