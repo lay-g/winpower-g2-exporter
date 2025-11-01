@@ -402,3 +402,158 @@ func TestHTTPClient_InvalidJSON(t *testing.T) {
 		t.Fatal("expected JSON decode error, got nil")
 	}
 }
+
+// TestHTTPClient_GetDeviceData_401_ErrorResponse tests handling of 401 authentication errors
+// with the error response format (data field as string instead of array).
+func TestHTTPClient_GetDeviceData_401_ErrorResponse(t *testing.T) {
+	logger := log.NewTestLogger()
+
+	tests := []struct {
+		name          string
+		statusCode    int
+		responseBody  string
+		wantAuthError bool
+	}{
+		{
+			name:       "401 with error response body",
+			statusCode: http.StatusUnauthorized,
+			responseBody: `{
+				"code":"401",
+				"message":"没有登录或者令牌过期",
+				"data":"Full authentication is required to access this resource(/api/v1/deviceData/detail/list)"
+			}`,
+			wantAuthError: true,
+		},
+		{
+			name:       "401 with plain error message",
+			statusCode: http.StatusUnauthorized,
+			responseBody: `{
+				"code":"401",
+				"message":"Token expired"
+			}`,
+			wantAuthError: true,
+		},
+		{
+			name:          "401 without proper JSON",
+			statusCode:    http.StatusUnauthorized,
+			responseBody:  "Unauthorized",
+			wantAuthError: true,
+		},
+		{
+			name:       "200 with error code 401 in body",
+			statusCode: http.StatusOK,
+			responseBody: `{
+				"code":"401",
+				"message":"没有登录或者令牌过期",
+				"data":"Full authentication is required to access this resource"
+			}`,
+			wantAuthError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create mock server
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tt.statusCode)
+				w.Write([]byte(tt.responseBody))
+			}))
+			defer server.Close()
+
+			cfg := DefaultConfig()
+			cfg.BaseURL = server.URL
+			cfg.Username = "admin"
+			cfg.Password = "secret"
+
+			client := NewHTTPClient(cfg, logger)
+			ctx := context.Background()
+
+			_, err := client.GetDeviceData(ctx, "expired-token")
+
+			// Should always return an error
+			if err == nil {
+				t.Fatal("expected error, got nil")
+			}
+
+			// Check if it's an authentication error
+			if tt.wantAuthError {
+				if !IsAuthenticationError(err) {
+					t.Errorf("expected authentication error, got: %T, %v", err, err)
+				}
+			}
+		})
+	}
+}
+
+// TestHTTPClient_GetDeviceData_ErrorCode tests handling of non-000000 error codes
+func TestHTTPClient_GetDeviceData_ErrorCode(t *testing.T) {
+	logger := log.NewTestLogger()
+
+	tests := []struct {
+		name         string
+		responseCode string
+		responseMsg  string
+		wantError    bool
+	}{
+		{
+			name:         "success code 000000",
+			responseCode: "000000",
+			responseMsg:  "OK",
+			wantError:    false,
+		},
+		{
+			name:         "error code 500",
+			responseCode: "500",
+			responseMsg:  "Internal Server Error",
+			wantError:    true,
+		},
+		{
+			name:         "error code 403",
+			responseCode: "403",
+			responseMsg:  "Forbidden",
+			wantError:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				resp := DeviceDataResponse{
+					Code: tt.responseCode,
+					Msg:  tt.responseMsg,
+					Data: []DeviceInfo{}, // Empty array for simplicity
+				}
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(resp)
+			}))
+			defer server.Close()
+
+			cfg := DefaultConfig()
+			cfg.BaseURL = server.URL
+			client := NewHTTPClient(cfg, logger)
+			ctx := context.Background()
+
+			result, err := client.GetDeviceData(ctx, "test-token")
+
+			if tt.wantError {
+				if err == nil {
+					t.Fatal("expected error, got nil")
+				}
+				if !IsNetworkError(err) {
+					t.Errorf("expected network error, got: %T", err)
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+				if result == nil {
+					t.Fatal("expected result, got nil")
+				}
+				if result.Code != tt.responseCode {
+					t.Errorf("result code = %q, want %q", result.Code, tt.responseCode)
+				}
+			}
+		})
+	}
+}

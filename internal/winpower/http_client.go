@@ -119,8 +119,25 @@ func (c *HTTPClient) GetDeviceData(ctx context.Context, token string) (*DeviceDa
 		zap.String("endpoint", fullURL),
 	)
 
+	// Create request
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fullURL, nil)
+	if err != nil {
+		return nil, &NetworkError{
+			Message: "failed to create request",
+			Err:     err,
+		}
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("Content-language", "zh-CN")
+
+	if token != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	}
+
 	var resp DeviceDataResponse
-	err := c.getJSON(ctx, fullURL, token, &resp)
+	err = c.doRequest(req, &resp)
 	if err != nil {
 		return nil, &NetworkError{
 			Message: "failed to fetch device data",
@@ -167,25 +184,9 @@ func (c *HTTPClient) postJSON(ctx context.Context, url string, body interface{},
 	return c.doRequest(req, result)
 }
 
-// getJSON sends a GET request and decodes JSON response.
-func (c *HTTPClient) getJSON(ctx context.Context, url string, token string, result interface{}) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", c.userAgent)
-	req.Header.Set("Content-language", "zh-CN")
-
-	if token != "" {
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-	}
-
-	return c.doRequest(req, result)
-}
-
 // doRequest executes the HTTP request and decodes the response.
+// It intelligently handles both successful responses and error responses where
+// the 'data' field might be a string instead of the expected type.
 func (c *HTTPClient) doRequest(req *http.Request, result interface{}) error {
 	resp, err := c.client.Do(req)
 	if err != nil {
@@ -212,7 +213,7 @@ func (c *HTTPClient) doRequest(req *http.Request, result interface{}) error {
 		return fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	// Check status code
+	// Check HTTP status code
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		c.logger.Warn("HTTP request returned non-2xx status",
 			zap.String("method", req.Method),
@@ -221,14 +222,43 @@ func (c *HTTPClient) doRequest(req *http.Request, result interface{}) error {
 			zap.String("response_body", string(bodyBytes)),
 		)
 
+		// Try to parse as error response for better error message
 		if resp.StatusCode == http.StatusUnauthorized {
+			var errResp ErrorResponse
+			if jsonErr := json.Unmarshal(bodyBytes, &errResp); jsonErr == nil && errResp.Code == "401" {
+				c.logger.Warn("authentication failed",
+					zap.String("code", errResp.Code),
+					zap.String("message", errResp.Message),
+					zap.String("data", errResp.Data),
+				)
+				return ErrAuthenticationFailed
+			}
 			return ErrAuthenticationFailed
 		}
 
 		return fmt.Errorf("HTTP request failed with status %d: %s", resp.StatusCode, string(bodyBytes))
 	}
 
-	// Decode JSON response
+	// Try to parse as error response first to detect application-level errors
+	// This handles cases where HTTP status is 200 but the application returns an error
+	var errResp ErrorResponse
+	if jsonErr := json.Unmarshal(bodyBytes, &errResp); jsonErr == nil && errResp.Code != "" && errResp.Code != "000000" {
+		c.logger.Warn("API returned error response",
+			zap.String("code", errResp.Code),
+			zap.String("message", errResp.Message),
+			zap.String("data", errResp.Data),
+		)
+
+		// Check if it's an authentication error (code 401)
+		if errResp.Code == "401" {
+			return ErrAuthenticationFailed
+		}
+
+		// Return generic error for other error codes
+		return fmt.Errorf("API error (code %s): %s", errResp.Code, errResp.Message)
+	}
+
+	// Parse as successful response
 	if err := json.Unmarshal(bodyBytes, result); err != nil {
 		c.logger.Error("failed to decode JSON response",
 			zap.String("response_body", string(bodyBytes)),
