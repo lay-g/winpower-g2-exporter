@@ -32,6 +32,6 @@ Content-Type: application/json
     "message": "OK",
     "data": {
         "deviceId": "e156e6cb-41cb-4b35-b0dd-869929186a5c",
-        "token": "eyJhbGciOiJIUzUxMiJ9.eyJhbGciOiJIUzUxMiJ9.eyJhbGciOiJIUzUxMiJ9.eyJleHAiOjE3NjAzNjc2MTMsImlhdCI6MTc2MDM2NTgxMywic3ViIjoiV0lOUE9XRVJfVE9LRU4iLCJpc3MiOiJXSU5QT1dFUiJ9.example-signature.example-signature.GyD6pluKZRMf_bQeUi2gmR4nqcKhnwG0wYFB-9jg-R4VhUJklp9vpcOa-bdZU58UDAXVwpiSFog8el24n5Fs5Q"
+        "token": "eyJhbGciOiJIUzUxMiJ9.eyJhbGciOiJIUzUxMiJ9.eyJleHAiOjE3NjAzNjc2MTMsImlhdCI6MTc2MDM2NTgxMywic3ViIjoiV0lOUE9XRVJfVE9LRU4iLCJpc3MiOiJXSU5QT1dFUiJ9.example-signature.example-signature"
     }
 }

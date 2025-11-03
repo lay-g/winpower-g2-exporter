@@ -1,7 +1,7 @@
 GET /api/v1/deviceData/detail/list?current=1&pageSize=100&areaId=00000000-0000-0000-0000-000000000000&includeSubArea=true&pageNum=1&deviceType=1 HTTP/1.1
 Host: winpower.example.com
 Connection: keep-alive
-Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJhbGciOiJIUzUxMiJ9.eyJhbGciOiJIUzUxMiJ9.eyJleHAiOjE3NjAzNjc2MTMsImlhdCI6MTc2MDM2NTgxMywic3ViIjoiV0lOUE9XRVJfVE9LRU4iLCJpc3MiOiJXSU5QT1dFUiJ9.example-signature.example-signature.y5xRnapzLDmG32NytIexDWbjUiZqE5zpfG0K01rejr9_5CicOcwd6hGqVAdWoep3ZuovqcoL3nz2ZjVFKQemlg
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJhbGciOiJIUzUxMiJ9.eyJleHAiOjE3NjAzNjc2MTMsImlhdCI6MTc2MDM2NTgxMywic3ViIjoiV0lOUE9XRVJfVE9LRU4iLCJpc3MiOiJXSU5QT1dFUiJ9.example-signature.example-signature
 User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36
 Accept: application/json, text/plain, */*
 DNT: 1
